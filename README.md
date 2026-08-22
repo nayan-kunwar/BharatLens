@@ -4,7 +4,7 @@
 
 BharatLens turns global geopolitical events into source-backed explanations of what they mean for India. **India Impact** is a feature inside BharatLens, not a second product name.
 
-This repository is at **M3 — Public Event UI**. PostgreSQL holds the domain; Fastify serves read-only `/api/v1` for published events, and Next.js presents the public event experience.
+This repository is at **M5 — News Ingestion**. RSS metadata can be pulled into PostgreSQL from a CLI. Events, claims, and India Impact remain hand-authored until later milestones.
 
 ## What runs in M0
 
@@ -23,6 +23,7 @@ cp .env.example .env
 docker compose up -d postgres redis
 pnpm db:migrate
 pnpm db:seed
+pnpm ingest:rss
 docker compose up --build
 ```
 
@@ -50,6 +51,7 @@ pnpm --filter @bharatlens/logging build
 pnpm --filter @bharatlens/database build
 pnpm db:migrate
 pnpm db:seed
+pnpm ingest:rss
 pnpm dev:api
 pnpm dev:worker
 pnpm dev:web
@@ -76,6 +78,7 @@ apps/web          Next.js
 packages/config   Zod-validated environment
 packages/database Drizzle schema, migrations, EventCatalog
 packages/logging  Pino
+packages/ingestion RSS adapter + CLI (no BullMQ)
 packages/shared   API envelope + domain enums/lifecycle
 ```
 
@@ -85,4 +88,5 @@ packages/shared   API envelope + domain enums/lifecycle
 - [API](docs/api.md)
 - [Development](docs/development.md)
 - [Database](docs/database.md)
+- [Ingestion](docs/ingestion.md)
 - [Decisions](docs/decisions/)

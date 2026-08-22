@@ -32,14 +32,15 @@ API_BASE_URL   (web; default http://localhost:3001, Compose uses http://api:3001
 
 From the repository root:
 
-| Command           | Purpose                        |
-| ----------------- | ------------------------------ |
-| `pnpm db:migrate` | Apply Drizzle SQL migrations   |
-| `pnpm db:seed`    | Hand-authored published events |
-| `pnpm test`       | Unit tests (Vitest)            |
-| `pnpm typecheck`  | `tsc --noEmit` in each package |
-| `pnpm lint`       | ESLint                         |
-| `pnpm format`     | Prettier                       |
+| Command           | Purpose                         |
+| ----------------- | ------------------------------- |
+| `pnpm db:migrate` | Apply Drizzle SQL migrations    |
+| `pnpm db:seed`    | Hand-authored published events  |
+| `pnpm ingest:rss` | Pull RSS metadata into articles |
+| `pnpm test`       | Unit tests (Vitest)             |
+| `pnpm typecheck`  | `tsc --noEmit` in each package  |
+| `pnpm lint`       | ESLint                          |
+| `pnpm format`     | Prettier                        |
 
 API and worker run TypeScript directly in development via `tsx`.
 

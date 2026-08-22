@@ -243,62 +243,49 @@ export class EventQueries {
   async getEventImpact(eventId: string) {
     const event = await this.requirePublicEventById(eventId);
 
-    const historyRows = await this.db
-      .select({
-        id: impactAssessments.id,
-        version: impactAssessments.version,
-        status: impactAssessments.status,
-        overallLevel: impactAssessments.overallLevel,
-        publishedAt: impactAssessments.publishedAt,
-      })
-      .from(impactAssessments)
-      .where(eq(impactAssessments.eventId, eventId))
-      .orderBy(asc(impactAssessments.version));
+    const assessmentRows = (
+      await this.db
+        .select()
+        .from(impactAssessments)
+        .where(
+          and(eq(impactAssessments.eventId, eventId), eq(impactAssessments.status, 'PUBLISHED')),
+        )
+        .orderBy(asc(impactAssessments.version))
+    ).filter((row) => row.status === 'PUBLISHED');
 
-    const history = historyRows.map((row) => ({
-      ...row,
-      publishedAt: iso(row.publishedAt),
-    }));
+    const assessmentIds = assessmentRows.map((row) => row.id);
+    const categoryRows =
+      assessmentIds.length === 0
+        ? []
+        : await this.db
+            .select()
+            .from(impactCategoryLevels)
+            .where(inArray(impactCategoryLevels.assessmentId, assessmentIds));
 
-    if (!event.currentImpactAssessmentId) {
-      return { current: null, history };
-    }
-
-    const [assessment] = await this.db
-      .select()
-      .from(impactAssessments)
-      .where(eq(impactAssessments.id, event.currentImpactAssessmentId))
-      .limit(1);
-
-    if (!assessment) {
-      return { current: null, history };
-    }
-
-    const categories = await this.db
-      .select()
-      .from(impactCategoryLevels)
-      .where(eq(impactCategoryLevels.assessmentId, assessment.id));
-
-    return {
-      current: {
-        id: assessment.id,
-        version: assessment.version,
-        status: assessment.status,
-        overallLevel: assessment.overallLevel,
-        reasoning: assessment.reasoning,
-        evidenceStrength: assessment.evidenceStrength,
-        analysisConfidence: assessment.analysisConfidence,
-        modelName: assessment.modelName,
-        promptVersion: assessment.promptVersion,
-        publishedAt: iso(assessment.publishedAt),
-        categories: categories.map((category) => ({
+    const history = assessmentRows.map((assessment) => ({
+      id: assessment.id,
+      version: assessment.version,
+      status: assessment.status,
+      overallLevel: assessment.overallLevel,
+      reasoning: assessment.reasoning,
+      evidenceStrength: assessment.evidenceStrength,
+      analysisConfidence: assessment.analysisConfidence,
+      modelName: assessment.modelName,
+      promptVersion: assessment.promptVersion,
+      publishedAt: iso(assessment.publishedAt),
+      categories: categoryRows
+        .filter((category) => category.assessmentId === assessment.id)
+        .map((category) => ({
           category: category.category,
           level: category.level,
           reasoning: category.reasoning,
         })),
-      },
-      history,
-    };
+    }));
+
+    const current =
+      history.find((item) => item.id === event.currentImpactAssessmentId) ?? history.at(-1) ?? null;
+
+    return { current, history };
   }
 
   async listEventUpdates(eventId: string) {

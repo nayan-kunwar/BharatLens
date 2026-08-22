@@ -18,6 +18,7 @@
     "db:generate": "pnpm --filter @bharatlens/database db:generate",
     "db:migrate": "pnpm --filter @bharatlens/database db:migrate",
     "db:seed": "pnpm --filter @bharatlens/database db:seed",
+    "ingest:rss": "pnpm --filter @bharatlens/ingestion ingest",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

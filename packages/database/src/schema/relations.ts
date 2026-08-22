@@ -14,9 +14,11 @@ import {
 } from './events.js';
 import { sources } from './sources.js';
 import { topics } from './topics.js';
+import { ingestionJobs } from './ingestion.js';
 
 export const sourcesRelations = relations(sources, ({ many }) => ({
   articles: many(articles),
+  ingestionJobs: many(ingestionJobs),
 }));
 
 export const articlesRelations = relations(articles, ({ one, many }) => ({
@@ -92,4 +94,8 @@ export const evidenceRelations = relations(evidence, ({ one }) => ({
   claim: one(claims, { fields: [evidence.claimId], references: [claims.id] }),
   source: one(sources, { fields: [evidence.sourceId], references: [sources.id] }),
   article: one(articles, { fields: [evidence.articleId], references: [articles.id] }),
+}));
+
+export const ingestionJobsRelations = relations(ingestionJobs, ({ one }) => ({
+  source: one(sources, { fields: [ingestionJobs.sourceId], references: [sources.id] }),
 }));

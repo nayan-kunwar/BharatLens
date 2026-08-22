@@ -66,6 +66,18 @@ Redis is required later for rate limiting and BullMQ. M0 only checks connectivit
 | Worker crash  | API and web still run                                    |
 | API crash     | Web homepage still renders; API status shows unreachable |
 
+## M4 timeline and impact history
+
+Event updates (`GET /api/v1/events/:id/updates`) and published impact assessments (`GET /api/v1/events/:id/impact`) stay as separate resources. The web app merges them into one chronology so a reader can see what changed in the situation and when India Impact was reassessed.
+
+Public impact history is **published snapshots only**. Draft assessments are not listed. Each history row includes category levels so the UI can show what moved between v1 and v2 without a second table.
+
+`pnpm db:seed` is additive: it will attach a second Hormuz assessment and extra timeline rows if the M3 seed already ran.
+
+## M5 news ingestion
+
+`packages/ingestion` fetches public RSS/Atom feeds from a CLI (`pnpm ingest:rss`). It stores source + article **metadata** only, hashes a normalized fingerprint, and records `ingestion_jobs`. It does not create events and does not use BullMQ.
+
 ## Next
 
-M4 can deepen the timeline and impact-history experience as event coverage grows.
+M6 is article deduplication beyond unique URL (normalized title, time window, entity overlap).

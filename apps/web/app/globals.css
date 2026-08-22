@@ -756,8 +756,57 @@ h3 {
   font-size: 0.85rem;
 }
 
-.timeline p {
-  margin-bottom: 0.45rem;
+.timeline__kind {
+  margin: 0 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.timeline__item--assessment {
+  border-left-color: var(--teal);
+}
+
+.timeline__sources,
+.impact-history-link {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.impact-versions {
+  display: grid;
+  gap: 1.25rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.impact-versions li {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.impact-versions__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.85rem;
+  margin-bottom: 0.6rem;
+  font-weight: 700;
+}
+
+.impact-versions__meta,
+.impact-versions__diffs {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.impact-versions__diffs {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
 }
 
 .claim-list {

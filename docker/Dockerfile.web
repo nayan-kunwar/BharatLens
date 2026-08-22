@@ -11,6 +11,7 @@ COPY packages/config/package.json packages/config/package.json
 COPY packages/database/package.json packages/database/package.json
 COPY packages/logging/package.json packages/logging/package.json
 COPY packages/shared/package.json packages/shared/package.json
+COPY packages/ingestion/package.json packages/ingestion/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build

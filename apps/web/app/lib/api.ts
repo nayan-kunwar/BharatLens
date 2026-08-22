@@ -54,31 +54,27 @@ export type EventDetail = EventSummary & {
   }>;
 };
 
-export type EventImpact = {
-  current: {
-    id: string;
-    version: number;
-    status: 'DRAFT' | 'PUBLISHED';
-    overallLevel: ImpactLevel;
+export type ImpactAssessmentSnapshot = {
+  id: string;
+  version: number;
+  status: 'DRAFT' | 'PUBLISHED';
+  overallLevel: ImpactLevel;
+  reasoning: string;
+  evidenceStrength: 'WEAK' | 'MODERATE' | 'STRONG';
+  analysisConfidence: 'LOW' | 'MEDIUM' | 'HIGH';
+  modelName: string | null;
+  promptVersion: string | null;
+  publishedAt: string | null;
+  categories: Array<{
+    category: string;
+    level: ImpactLevel;
     reasoning: string;
-    evidenceStrength: 'WEAK' | 'MODERATE' | 'STRONG';
-    analysisConfidence: 'LOW' | 'MEDIUM' | 'HIGH';
-    modelName: string | null;
-    promptVersion: string | null;
-    publishedAt: string | null;
-    categories: Array<{
-      category: string;
-      level: ImpactLevel;
-      reasoning: string;
-    }>;
-  } | null;
-  history: Array<{
-    id: string;
-    version: number;
-    status: 'DRAFT' | 'PUBLISHED';
-    overallLevel: ImpactLevel;
-    publishedAt: string | null;
   }>;
+};
+
+export type EventImpact = {
+  current: ImpactAssessmentSnapshot | null;
+  history: ImpactAssessmentSnapshot[];
 };
 
 export type Claim = {

@@ -3,6 +3,7 @@ export * from './claims.js';
 export * from './countries.js';
 export * from './enums.js';
 export * from './events.js';
+export * from './ingestion.js';
 export * from './relations.js';
 export * from './sources.js';
 export * from './topics.js';

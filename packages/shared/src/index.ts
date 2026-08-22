@@ -34,6 +34,7 @@ export const ErrorCode = {
   SOURCE_NOT_FOUND: 'SOURCE_NOT_FOUND',
   DUPLICATE_EVENT: 'DUPLICATE_EVENT',
   INSUFFICIENT_EVIDENCE: 'INSUFFICIENT_EVIDENCE',
+  INGESTION_FAILED: 'INGESTION_FAILED',
   COUNTRY_NOT_FOUND: 'COUNTRY_NOT_FOUND',
   TOPIC_NOT_FOUND: 'TOPIC_NOT_FOUND',
 } as const;
@@ -50,9 +51,11 @@ export {
   EVIDENCE_STRENGTHS,
   EXCERPT_MAX_LENGTH,
   IMPACT_CATEGORIES,
+  IMPACT_LEVEL_RANK,
   IMPACT_LEVELS,
   IMPORTANCE_LEVELS,
   SOURCE_TYPES,
+  INGESTION_JOB_STATUSES,
 } from './domain.js';
 export type {
   AnalysisConfidence,
@@ -67,9 +70,19 @@ export type {
   ImpactLevel,
   ImportanceLevel,
   SourceType,
+  IngestionJobStatus,
 } from './domain.js';
 export {
   assertEventStatusTransition,
   canTransitionEventStatus,
   nextStatusAfterTimelineUpdate,
 } from './lifecycle.js';
+export { compareImpactLevel, diffCategoryLevels, mergeEventChronology } from './timeline.js';
+export type {
+  CategoryLevel,
+  CategoryLevelChange,
+  ChronologyAssessment,
+  ChronologyItem,
+  ChronologyUpdate,
+  ImpactLevelChange,
+} from './timeline.js';

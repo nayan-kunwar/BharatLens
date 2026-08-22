@@ -18,6 +18,13 @@ export type ImportanceLevel = (typeof IMPORTANCE_LEVELS)[number];
 export const IMPACT_LEVELS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
 export type ImpactLevel = (typeof IMPACT_LEVELS)[number];
 
+export const IMPACT_LEVEL_RANK: Record<ImpactLevel, number> = {
+  LOW: 0,
+  MEDIUM: 1,
+  HIGH: 2,
+  CRITICAL: 3,
+};
+
 export const IMPACT_CATEGORIES = [
   'ENERGY',
   'TRADE',
@@ -67,5 +74,8 @@ export const SOURCE_TYPES = [
 ] as const;
 
 export type SourceType = (typeof SOURCE_TYPES)[number];
+
+export const INGESTION_JOB_STATUSES = ['RUNNING', 'SUCCEEDED', 'FAILED'] as const;
+export type IngestionJobStatus = (typeof INGESTION_JOB_STATUSES)[number];
 
 export const EXCERPT_MAX_LENGTH = 500;

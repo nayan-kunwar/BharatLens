@@ -58,3 +58,9 @@ export const sourceTypeEnum = pgEnum('source_type', [
   'THINK_TANK',
   'OTHER',
 ]);
+
+export const ingestionJobStatusEnum = pgEnum('ingestion_job_status', [
+  'RUNNING',
+  'SUCCEEDED',
+  'FAILED',
+]);

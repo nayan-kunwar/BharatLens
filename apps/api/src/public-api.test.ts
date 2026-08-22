@@ -177,6 +177,57 @@ describe.skipIf(!databaseUrl)('public API v1', () => {
     expect(missing.statusCode).toBe(404);
   });
 
+  it('returns published impact history snapshots and hides drafts', async () => {
+    const draft = await catalog.createImpactAssessment({
+      eventId,
+      overallLevel: 'LOW',
+      reasoning: 'Draft must not appear on the public API.',
+      evidenceStrength: 'WEAK',
+      analysisConfidence: 'LOW',
+      status: 'DRAFT',
+      categories: [{ category: 'ENERGY', level: 'LOW', reasoning: 'Draft only.' }],
+    });
+    expect(draft.status).toBe('DRAFT');
+
+    await catalog.createImpactAssessment({
+      eventId,
+      overallLevel: 'MEDIUM',
+      reasoning: 'Alternative routing reduced immediate pressure.',
+      evidenceStrength: 'MODERATE',
+      analysisConfidence: 'MEDIUM',
+      status: 'PUBLISHED',
+      publishedAt: new Date('2026-08-23T00:00:00.000Z'),
+      categories: [
+        { category: 'ENERGY', level: 'MEDIUM', reasoning: 'Some cargoes can be rerouted.' },
+      ],
+    });
+
+    const impact = await app.inject({
+      method: 'GET',
+      url: `/api/v1/events/${eventId}/impact`,
+    });
+    const body = impact.json() as {
+      data: {
+        current: { version: number; overallLevel: string; reasoning: string };
+        history: Array<{
+          version: number;
+          status: string;
+          overallLevel: string;
+          reasoning: string;
+          categories: Array<{ category: string; level: string }>;
+        }>;
+      };
+    };
+
+    expect(body.data.history.every((item) => item.status === 'PUBLISHED')).toBe(true);
+    expect(body.data.history.some((item) => item.reasoning.includes('must not appear'))).toBe(
+      false,
+    );
+    expect(body.data.current.overallLevel).toBe('MEDIUM');
+    expect(body.data.history.at(-1)?.categories[0]?.level).toBe('MEDIUM');
+    expect(body.data.history[0]?.reasoning).toContain('seaborne crude');
+  });
+
   it('validates pagination', async () => {
     const response = await app.inject({ method: 'GET', url: '/api/v1/events?page=0' });
     expect(response.statusCode).toBe(400);

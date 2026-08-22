@@ -1,0 +1,29 @@
+{
+  "name": "@bharatlens/ingestion",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "ingest": "node --env-file=../../.env --import tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@bharatlens/database": "workspace:*",
+    "@bharatlens/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.4",
+    "@types/node": "^22.17.2",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

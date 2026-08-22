@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { EventTimeline } from '../../components/event-timeline';
 import { ImpactBadge } from '../../components/impact-badge';
+import { ImpactHistory } from '../../components/impact-history';
 import { ApiError, getEventPage } from '../../lib/api';
 import { formatDate, formatLabel } from '../../lib/presentation';
+import { mergeEventChronology } from '@bharatlens/shared';
 
 type EventPageProps = {
   params: Promise<{ slug: string }>;
@@ -34,6 +37,14 @@ export default async function EventPage({ params }: EventPageProps) {
   }
 
   const { claims, event, impact, sources, updates } = pageData;
+  const chronology = mergeEventChronology({
+    updates,
+    assessments: impact.history,
+  });
+  const sourcesNote =
+    sources.length > 0
+      ? 'Linked reporting is listed under Sources. Timeline rows do not invent citations.'
+      : 'This example does not attach article URLs to timeline rows. BharatLens does not invent sources.';
 
   return (
     <main className="page-shell page-content event-detail">
@@ -114,24 +125,17 @@ export default async function EventPage({ params }: EventPageProps) {
           <section className="detail-section" aria-labelledby="timeline-heading">
             <p className="eyebrow">Timeline</p>
             <h2 id="timeline-heading">How the event has evolved</h2>
-            {updates.length > 0 ? (
-              <ol className="timeline">
-                {updates.map((update) => (
-                  <li key={update.id}>
-                    <time dateTime={update.occurredAt}>{formatDate(update.occurredAt)}</time>
-                    <div>
-                      <h3>{update.title}</h3>
-                      {update.body ? <p>{update.body}</p> : null}
-                      {update.impactChange ? (
-                        <p className="timeline__change">Impact change: {update.impactChange}</p>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="empty-state">No verified timeline updates have been published yet.</p>
-            )}
+            <EventTimeline items={chronology} sourcesNote={sourcesNote} />
+          </section>
+
+          <section className="detail-section" aria-labelledby="impact-history-heading">
+            <p className="eyebrow">Impact history</p>
+            <h2 id="impact-history-heading">Versioned India Impact</h2>
+            <p>
+              Assessments are append-only. A later version does not overwrite an earlier one. Levels
+              are product assessments, not measurements.
+            </p>
+            <ImpactHistory history={impact.history} />
           </section>
 
           <section className="detail-section" aria-labelledby="claims-heading">
@@ -210,15 +214,10 @@ export default async function EventPage({ params }: EventPageProps) {
                   <span>Evidence: {formatLabel(impact.current.evidenceStrength)}</span>
                   <span>Analysis estimate: {formatLabel(impact.current.analysisConfidence)}</span>
                 </div>
-                {impact.history.length > 0 ? (
-                  <ol className="impact-history" aria-label="Impact assessment history">
-                    {impact.history.map((version) => (
-                      <li key={version.id}>
-                        v{version.version} {formatLabel(version.overallLevel)}
-                        {version.publishedAt ? ` · ${formatDate(version.publishedAt)}` : ''}
-                      </li>
-                    ))}
-                  </ol>
+                {impact.history.length > 1 ? (
+                  <p className="impact-history-link">
+                    <a href="#impact-history-heading">{impact.history.length} published versions</a>
+                  </p>
                 ) : null}
                 <div className="impact-chart" aria-label="India impact categories">
                   {impact.current.categories.map((category) => (

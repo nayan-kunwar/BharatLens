@@ -8,6 +8,7 @@ import {
   type ImpactCategory,
   type ImpactLevel,
   type ImportanceLevel,
+  type IngestionJobStatus,
   type SourceType,
   DomainError,
   EXCERPT_MAX_LENGTH,
@@ -29,6 +30,7 @@ import {
   impactCategoryLevels,
   watchItems,
 } from './schema/events.js';
+import { ingestionJobs } from './schema/ingestion.js';
 import { sources } from './schema/sources.js';
 import { topics } from './schema/topics.js';
 
@@ -73,6 +75,38 @@ export class EventCatalog {
 
     if (!row) {
       throw new DomainError('INTERNAL_ERROR', 'Failed to create source');
+    }
+
+    return row;
+  }
+
+  async upsertSource(input: {
+    name: string;
+    slug: string;
+    type: SourceType;
+    homepageUrl?: string;
+  }) {
+    const [row] = await this.db
+      .insert(sources)
+      .values({
+        name: input.name,
+        slug: input.slug,
+        type: input.type,
+        homepageUrl: input.homepageUrl,
+      })
+      .onConflictDoUpdate({
+        target: sources.slug,
+        set: {
+          name: input.name,
+          type: input.type,
+          homepageUrl: input.homepageUrl,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    if (!row) {
+      throw new DomainError('INTERNAL_ERROR', 'Failed to upsert source');
     }
 
     return row;
@@ -191,6 +225,77 @@ export class EventCatalog {
     if (!row) {
       throw new DomainError('INTERNAL_ERROR', 'Failed to create article');
     }
+
+    return row;
+  }
+
+  async ingestArticle(input: {
+    sourceId: string;
+    title: string;
+    url: string;
+    status?: ArticleStatus;
+    publishedAt?: Date;
+    summary?: string;
+    contentHash?: string;
+    externalId?: string;
+    author?: string;
+  }) {
+    const [row] = await this.db
+      .insert(articles)
+      .values({
+        sourceId: input.sourceId,
+        title: input.title,
+        url: input.url,
+        status: input.status ?? 'NORMALIZED',
+        publishedAt: input.publishedAt,
+        summary: input.summary,
+        contentHash: input.contentHash,
+        externalId: input.externalId,
+        author: input.author,
+      })
+      .onConflictDoNothing()
+      .returning();
+
+    return row ?? null;
+  }
+
+  async startIngestionJob(sourceId: string) {
+    const [row] = await this.db
+      .insert(ingestionJobs)
+      .values({ sourceId, status: 'RUNNING' })
+      .returning();
+
+    if (!row) {
+      throw new DomainError('INTERNAL_ERROR', 'Failed to create ingestion job');
+    }
+
+    return row;
+  }
+
+  async completeIngestionJob(
+    jobId: string,
+    input: {
+      status: IngestionJobStatus;
+      itemsSeen: number;
+      itemsInserted: number;
+      itemsDuplicate: number;
+      itemsRejected: number;
+      errorMessage?: string;
+    },
+  ) {
+    const [row] = await this.db
+      .update(ingestionJobs)
+      .set({
+        status: input.status,
+        itemsSeen: input.itemsSeen,
+        itemsInserted: input.itemsInserted,
+        itemsDuplicate: input.itemsDuplicate,
+        itemsRejected: input.itemsRejected,
+        errorMessage: input.errorMessage,
+        finishedAt: new Date(),
+      })
+      .where(eq(ingestionJobs.id, jobId))
+      .returning();
 
     return row;
   }
@@ -356,6 +461,7 @@ export class EventCatalog {
     status?: 'DRAFT' | 'PUBLISHED';
     modelName?: string;
     promptVersion?: string;
+    publishedAt?: Date;
   }) {
     return this.db.transaction(async (tx) => {
       const [event] = await tx.select().from(events).where(eq(events.id, input.eventId)).limit(1);
@@ -372,7 +478,7 @@ export class EventCatalog {
 
       const version = (latest?.version ?? 0) + 1;
       const status = input.status ?? 'DRAFT';
-      const publishedAt = status === 'PUBLISHED' ? new Date() : null;
+      const publishedAt = status === 'PUBLISHED' ? (input.publishedAt ?? new Date()) : null;
 
       const [assessment] = await tx
         .insert(impactAssessments)

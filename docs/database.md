@@ -25,6 +25,7 @@ Host port is **5433** (container 5432) so a local Postgres on 5432 does not inte
 | `impact_assessments`                                  | Versioned India Impact (`v1`, `v2`, …). `analysis_confidence` lives here.                        |
 | `impact_category_levels`                              | Per-category levels so the UI does not hardcode columns                                          |
 | `events.current_impact_assessment_id`                 | Pointer to the current published assessment. Not a second impact table.                          |
+| `ingestion_jobs`                                      | CLI ingest runs (counts, success/failure). Not a BullMQ table.                                   |
 
 There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 
@@ -48,8 +49,8 @@ There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 
 ## Domain service
 
-`EventCatalog` in `packages/database` is the write API for M1 (create event, attach article, claims/evidence, versioned assessments, timeline). REST is M2.
+`EventCatalog` in `packages/database` is the write API (create event, attach article, claims/evidence, versioned assessments, timeline, **idempotent article ingest**). REST is M2. RSS ingest is a CLI in `@bharatlens/ingestion`.
 
-`pnpm db:seed` is idempotent by event slug. It inserts countries, topics, and two published example events for the M3 UI. Re-running it skips events that already exist.
+`pnpm db:seed` is idempotent by event slug and **additive for M4**: if the Hormuz example already exists from M3, a second published impact assessment and extra timeline rows are attached instead of skipping the event.
 
 Evidence strength is **computed** from linked sources, not an LLM percentage. Analysis confidence is a separate field on assessments.

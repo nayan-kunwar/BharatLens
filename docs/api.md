@@ -30,7 +30,7 @@ Claims on the public API are `APPROVED` only.
 | GET    | `/api/v1/events/:slug`       | Detail                                                                                                                                                              |
 | GET    | `/api/v1/events/:id/sources` | `:id` is event UUID                                                                                                                                                 |
 | GET    | `/api/v1/events/:id/claims`  | Includes evidence; FACT vs ANALYSIS vs SCENARIO vs UNKNOWN                                                                                                          |
-| GET    | `/api/v1/events/:id/impact`  | Current assessment (`evidenceStrength` + `analysisConfidence`) and version history                                                                                  |
+| GET    | `/api/v1/events/:id/impact`  | Current published assessment and **published** version history (full snapshots: reasoning, evidence vs analysis fields, categories). Draft assessments are omitted. |
 | GET    | `/api/v1/events/:id/updates` | Timeline                                                                                                                                                            |
 | GET    | `/api/v1/countries`          |                                                                                                                                                                     |
 | GET    | `/api/v1/countries/:code`    |                                                                                                                                                                     |

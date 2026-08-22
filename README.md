@@ -4,13 +4,13 @@
 
 BharatLens turns global geopolitical events into source-backed explanations of what they mean for India. **India Impact** is a feature inside BharatLens, not a second product name.
 
-This repository is at **M2 — Public REST**. PostgreSQL holds the domain; Fastify serves read-only `/api/v1` for published events.
+This repository is at **M3 — Public Event UI**. PostgreSQL holds the domain; Fastify serves read-only `/api/v1` for published events, and Next.js presents the public event experience.
 
 ## What runs in M0
 
 | Service    | Role                                                       | Port                           |
 | ---------- | ---------------------------------------------------------- | ------------------------------ |
-| `web`      | Next.js homepage                                           | 3000                           |
+| `web`      | Next.js public event browser                               | 3000                           |
 | `api`      | Fastify public REST + health                               | 3101 (host) → 3001 (container) |
 | `worker`   | Idle process (health + Redis/Postgres ping, **no jobs**)   | 3002                           |
 | `postgres` | Source of truth                                            | 5433 (host) → 5432 (container) |
@@ -22,6 +22,7 @@ This repository is at **M2 — Public REST**. PostgreSQL holds the domain; Fasti
 cp .env.example .env
 docker compose up -d postgres redis
 pnpm db:migrate
+pnpm db:seed
 docker compose up --build
 ```
 
@@ -48,6 +49,7 @@ pnpm --filter @bharatlens/config build
 pnpm --filter @bharatlens/logging build
 pnpm --filter @bharatlens/database build
 pnpm db:migrate
+pnpm db:seed
 pnpm dev:api
 pnpm dev:worker
 pnpm dev:web

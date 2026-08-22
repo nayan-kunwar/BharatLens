@@ -23,7 +23,7 @@ WORKER_HEALTH_PORT
 WEB_ORIGIN
 DATABASE_URL
 REDIS_URL
-API_BASE_URL   (web only, Docker)
+API_BASE_URL   (web; default http://localhost:3001, Compose uses http://api:3001)
 ```
 
 `LLM_API_KEY` and `NEWS_API_KEY` are not defined yet. They will be added when those features exist.
@@ -35,6 +35,7 @@ From the repository root:
 | Command           | Purpose                        |
 | ----------------- | ------------------------------ |
 | `pnpm db:migrate` | Apply Drizzle SQL migrations   |
+| `pnpm db:seed`    | Hand-authored published events |
 | `pnpm test`       | Unit tests (Vitest)            |
 | `pnpm typecheck`  | `tsc --noEmit` in each package |
 | `pnpm lint`       | ESLint                         |

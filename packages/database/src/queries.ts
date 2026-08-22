@@ -329,7 +329,7 @@ export class EventQueries {
       .map((row) => row.currentImpactAssessmentId)
       .filter((id): id is string => Boolean(id));
 
-    const [countryRows, topicRows, assessmentRows] = await Promise.all([
+    const [countryRows, topicRows, assessmentRows, categoryRows] = await Promise.all([
       this.db
         .select({
           eventId: eventCountries.eventId,
@@ -355,9 +355,26 @@ export class EventQueries {
             .select()
             .from(impactAssessments)
             .where(inArray(impactAssessments.id, assessmentIds)),
+      assessmentIds.length === 0
+        ? Promise.resolve([])
+        : this.db
+            .select({
+              assessmentId: impactCategoryLevels.assessmentId,
+              category: impactCategoryLevels.category,
+              level: impactCategoryLevels.level,
+            })
+            .from(impactCategoryLevels)
+            .where(inArray(impactCategoryLevels.assessmentId, assessmentIds)),
     ]);
 
     const assessmentsById = new Map(assessmentRows.map((row) => [row.id, row]));
+    const categoriesByAssessmentId = new Map<string, Array<(typeof categoryRows)[number]>>();
+
+    for (const category of categoryRows) {
+      const existing = categoriesByAssessmentId.get(category.assessmentId) ?? [];
+      existing.push(category);
+      categoriesByAssessmentId.set(category.assessmentId, existing);
+    }
 
     return rows.map((event) => {
       const assessment = event.currentImpactAssessmentId
@@ -386,6 +403,10 @@ export class EventQueries {
               evidenceStrength: assessment.evidenceStrength,
               analysisConfidence: assessment.analysisConfidence,
               version: assessment.version,
+              categories: (categoriesByAssessmentId.get(assessment.id) ?? []).map((category) => ({
+                category: category.category,
+                level: category.level,
+              })),
             }
           : null,
       };

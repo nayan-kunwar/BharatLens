@@ -21,7 +21,33 @@ Worker (apps/worker)
         └── heartbeat     ping Postgres + Redis every 30s
 ```
 
-There are **no write/admin routes** yet (M10). Public GETs are implemented.
+There are **no write/admin routes** yet (M10). Public GETs are implemented and consumed by the Next.js M3 interface.
+
+## M3 public interface
+
+The web application uses server-rendered, no-cache reads to the existing public API. It does not query PostgreSQL directly and it does not invent fallback event data when the API is unavailable.
+
+```text
+Next.js routes
+    |
+    +-- /, /events, /events/:slug
+    +-- /countries, /countries/:code
+    +-- /topics, /topics/:slug
+    +-- /search
+    +-- /about
+    |
+    v
+Fastify public GET endpoints
+    |
+    v
+PostgreSQL
+```
+
+Event detail pages render the M2 detail, claims, sources, updates, and impact endpoints together. The UI labels evidence strength separately from the analysis-confidence estimate so readers do not mistake an interpretation for a measured fact.
+
+The homepage splits High India Impact from recently updated events, and lists topics and countries linked to published records. Event cards show Energy / Trade / Security when those category levels exist on the current assessment.
+
+Hand-authored published examples are loaded with `pnpm db:seed` so the public UI is not empty. Seed claims are labeled ANALYSIS / SCENARIO / UNKNOWN and do not invent news article URLs.
 
 ## Why an idle worker exists now
 
@@ -42,4 +68,4 @@ Redis is required later for rate limiting and BullMQ. M0 only checks connectivit
 
 ## Next
 
-M3 adds the Next.js event UI on top of these GETs.
+M4 can deepen the timeline and impact-history experience as event coverage grows.

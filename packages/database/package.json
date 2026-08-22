@@ -15,7 +15,8 @@
     "lint": "eslint src",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "node --env-file=../../.env --import tsx src/migrate.ts"
+    "db:migrate": "node --env-file=../../.env --import tsx src/migrate.ts",
+    "db:seed": "node --env-file=../../.env --import tsx src/seed.ts"
   },
   "dependencies": {
     "@bharatlens/shared": "workspace:*",

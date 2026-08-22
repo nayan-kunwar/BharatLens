@@ -5,6 +5,7 @@ PostgreSQL 16 is the source of truth. Schema lives in `packages/database`. Apply
 ```bash
 docker compose up -d postgres redis
 pnpm db:migrate
+pnpm db:seed
 ```
 
 Host port is **5433** (container 5432) so a local Postgres on 5432 does not intercept connections. Inside Compose, apps still use `postgres:5432`.
@@ -48,5 +49,7 @@ There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 ## Domain service
 
 `EventCatalog` in `packages/database` is the write API for M1 (create event, attach article, claims/evidence, versioned assessments, timeline). REST is M2.
+
+`pnpm db:seed` is idempotent by event slug. It inserts countries, topics, and two published example events for the M3 UI. Re-running it skips events that already exist.
 
 Evidence strength is **computed** from linked sources, not an LLM percentage. Analysis confidence is a separate field on assessments.

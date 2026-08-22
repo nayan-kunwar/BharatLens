@@ -9,7 +9,7 @@
     "start": "next start --port 3000",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint app",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
     "next": "^15.5.0",

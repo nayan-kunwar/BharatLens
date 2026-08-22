@@ -107,6 +107,7 @@ export class EventCatalog {
     title: string;
     slug: string;
     summary?: string;
+    description?: string;
     countryIds?: string[];
     topicIds?: string[];
     importance?: ImportanceLevel;
@@ -119,6 +120,7 @@ export class EventCatalog {
           title: input.title,
           slug: input.slug,
           summary: input.summary,
+          description: input.description,
           status: 'CANDIDATE',
           importance: input.importance ?? 'MEDIUM',
           occurredAt: input.occurredAt,

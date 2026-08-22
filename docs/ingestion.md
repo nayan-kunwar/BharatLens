@@ -43,9 +43,28 @@ Record ingestion_jobs row
 
 Normalization happens **before** insert. Stored status is `NORMALIZED`, not a second rewrite pass.
 
-Rejected items (empty title, non-http URL) are counted and not stored. Duplicates are counted; existing rows are not overwritten.
+Rejected items (empty title, non-http URL) are counted and not stored.
 
-Ingest does **not** create events. Candidate-event creation is later (after M6 deduplication).
+## M6 deduplication
+
+Hard matches (unique constraints — no second row):
+
+```text
+canonical URL
+source + external ID (RSS guid)
+```
+
+Soft matches (second URL is stored with status `DUPLICATE` and `duplicate_of_article_id`):
+
+```text
+content hash (match title + calendar day + summary)
+exact normalized title within 48 hours
+token overlap within 48 hours (shared significant tokens + a gazetteer entity)
+```
+
+This is **not** semantic embeddings and not a vector database. False positives are reduced by requiring a time window and, for the overlap layer, a named token such as a country or "hormuz". False negatives (same story, different wording, no shared tokens) are accepted until there is evidence they matter.
+
+Ingest still does **not** create events.
 
 ## CLI
 
@@ -70,9 +89,10 @@ Volume is tiny. Postgres unique constraints are the dedupe. BullMQ is M9, when i
 
 ## Failure modes
 
-| Failure            | Effect                                              |
-| ------------------ | --------------------------------------------------- |
-| Feed HTTP error    | Job `FAILED`; other feeds still run                 |
-| Empty parse        | Job `FAILED`                                        |
-| Duplicate URL      | Counted as duplicate; no second row                 |
-| Publisher ToS/rate | Operator responsibility; keep the source list small |
+| Failure              | Effect                                              |
+| -------------------- | --------------------------------------------------- |
+| Feed HTTP error      | Job `FAILED`; other feeds still run                 |
+| Empty parse          | Job `FAILED`                                        |
+| Duplicate URL / guid | Counted as duplicate; no second row                 |
+| Soft duplicate       | Row stored as `DUPLICATE` pointing at the original  |
+| Publisher ToS/rate   | Operator responsibility; keep the source list small |

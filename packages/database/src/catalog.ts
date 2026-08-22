@@ -15,7 +15,7 @@ import {
   assertEventStatusTransition,
   nextStatusAfterTimelineUpdate,
 } from '@bharatlens/shared';
-import { countDistinct, desc, eq } from 'drizzle-orm';
+import { and, countDistinct, desc, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
 import type { Database } from './client.js';
 import { articles } from './schema/articles.js';
 import { claims, evidence } from './schema/claims.js';
@@ -237,6 +237,8 @@ export class EventCatalog {
     publishedAt?: Date;
     summary?: string;
     contentHash?: string;
+    normalizedTitle?: string;
+    duplicateOfArticleId?: string;
     externalId?: string;
     author?: string;
   }) {
@@ -250,6 +252,8 @@ export class EventCatalog {
         publishedAt: input.publishedAt,
         summary: input.summary,
         contentHash: input.contentHash,
+        normalizedTitle: input.normalizedTitle,
+        duplicateOfArticleId: input.duplicateOfArticleId,
         externalId: input.externalId,
         author: input.author,
       })
@@ -257,6 +261,53 @@ export class EventCatalog {
       .returning();
 
     return row ?? null;
+  }
+
+  async findArticleByUrl(url: string) {
+    const [row] = await this.db.select().from(articles).where(eq(articles.url, url)).limit(1);
+    return row ?? null;
+  }
+
+  async findArticleBySourceExternalId(sourceId: string, externalId: string) {
+    const [row] = await this.db
+      .select()
+      .from(articles)
+      .where(and(eq(articles.sourceId, sourceId), eq(articles.externalId, externalId)))
+      .limit(1);
+    return row ?? null;
+  }
+
+  async findCanonicalArticleByContentHash(contentHash: string) {
+    const [row] = await this.db
+      .select()
+      .from(articles)
+      .where(
+        and(
+          eq(articles.contentHash, contentHash),
+          inArray(articles.status, ['INGESTED', 'NORMALIZED', 'LINKED']),
+        ),
+      )
+      .limit(1);
+    return row ?? null;
+  }
+
+  async listCanonicalArticlesNearPublishedAt(publishedAt: Date, windowHours: number) {
+    const ms = windowHours * 60 * 60 * 1000;
+    const from = new Date(publishedAt.getTime() - ms);
+    const to = new Date(publishedAt.getTime() + ms);
+
+    return this.db
+      .select()
+      .from(articles)
+      .where(
+        and(
+          inArray(articles.status, ['INGESTED', 'NORMALIZED', 'LINKED']),
+          isNotNull(articles.publishedAt),
+          gte(articles.publishedAt, from),
+          lte(articles.publishedAt, to),
+        ),
+      )
+      .limit(200);
   }
 
   async startIngestionJob(sourceId: string) {

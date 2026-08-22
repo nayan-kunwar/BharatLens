@@ -11,6 +11,7 @@ export type NormalizedArticle = {
   publishedAt?: Date;
   summary?: string;
   contentHash: string;
+  matchTitle: string;
 };
 
 export function canonicalizeUrl(raw: string): string | null {
@@ -46,6 +47,16 @@ export function normalizeTitle(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
 
+/** Lowercase, punctuation-stripped title used for duplicate matching. */
+export function matchTitle(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function stripHtml(value: string): string {
   return decodeXmlEntities(
     value
@@ -79,12 +90,13 @@ export function truncateSummary(value: string | undefined): string | undefined {
 
 export function hashArticle(input: {
   title: string;
-  url: string;
   publishedAt?: string;
   summary?: string;
 }): string {
   return createHash('sha256')
-    .update(`${input.title}\n${input.url}\n${input.publishedAt ?? ''}\n${input.summary ?? ''}`)
+    .update(
+      `${matchTitle(input.title)}\n${input.publishedAt?.slice(0, 10) ?? ''}\n${input.summary ?? ''}`,
+    )
     .digest('hex');
 }
 
@@ -116,9 +128,9 @@ export function normalizeArticle(input: {
     author,
     publishedAt: publishedIso ? new Date(publishedIso) : undefined,
     summary,
+    matchTitle: matchTitle(title),
     contentHash: hashArticle({
       title,
-      url,
       publishedAt: publishedIso,
       summary,
     }),

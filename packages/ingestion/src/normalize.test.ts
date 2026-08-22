@@ -28,10 +28,25 @@ describe('article normalization', () => {
   });
 
   it('changes the hash when the summary changes', () => {
-    const url = 'https://example.test/a';
     expect(
-      hashArticle({ title: 'A', url, summary: 'one' }) ===
-        hashArticle({ title: 'A', url, summary: 'two' }),
+      hashArticle({ title: 'A', summary: 'one' }) === hashArticle({ title: 'A', summary: 'two' }),
     ).toBe(false);
+  });
+
+  it('hashes the match title not the URL so syndication can collide', () => {
+    const first = normalizeArticle({
+      title: 'Hormuz disruption',
+      url: 'https://example.test/bbc/hormuz',
+      publishedAt: '2026-08-20T00:00:00.000Z',
+      summary: 'Shipping interrupted.',
+    });
+    const second = normalizeArticle({
+      title: 'Hormuz disruption!',
+      url: 'https://news.example.test/un/hormuz',
+      publishedAt: '2026-08-20T12:00:00.000Z',
+      summary: 'Shipping interrupted.',
+    });
+    expect(first?.contentHash).toBe(second?.contentHash);
+    expect(first?.matchTitle).toBe(second?.matchTitle);
   });
 });

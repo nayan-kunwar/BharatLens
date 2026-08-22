@@ -4,7 +4,7 @@
 
 BharatLens turns global geopolitical events into source-backed explanations of what they mean for India. **India Impact** is a feature inside BharatLens, not a second product name.
 
-This repository is at **M5 — News Ingestion**. RSS metadata can be pulled into PostgreSQL from a CLI. Events, claims, and India Impact remain hand-authored until later milestones.
+This repository is at **M6 — Deduplication**. Ingested articles are matched by URL, source external ID, content hash, then normalized title and token overlap inside a 48-hour window. Events remain hand-authored.
 
 ## What runs in M0
 

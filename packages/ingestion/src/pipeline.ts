@@ -1,8 +1,17 @@
 import type { EventCatalog } from '@bharatlens/database';
 import type { NewsSourceAdapter } from './adapter.js';
+import { findDuplicate, isHardDuplicate, type DuplicateReason } from './dedupe.js';
 import type { FeedConfig } from './feeds.js';
 import { normalizeArticle } from './normalize.js';
 import { RssAdapter } from './rss-adapter.js';
+
+const emptyReasons = (): Record<DuplicateReason, number> => ({
+  URL: 0,
+  EXTERNAL_ID: 0,
+  CONTENT_HASH: 0,
+  TITLE_WINDOW: 0,
+  ENTITY_OVERLAP: 0,
+});
 
 export type IngestSourceResult = {
   slug: string;
@@ -12,6 +21,7 @@ export type IngestSourceResult = {
   itemsInserted: number;
   itemsDuplicate: number;
   itemsRejected: number;
+  duplicateReasons: Record<DuplicateReason, number>;
   errorMessage?: string;
 };
 
@@ -34,6 +44,7 @@ export async function ingestFeed(input: {
   let itemsInserted = 0;
   let itemsDuplicate = 0;
   let itemsRejected = 0;
+  const duplicateReasons = emptyReasons();
 
   try {
     const rawItems = await adapter.fetchArticles();
@@ -46,6 +57,22 @@ export async function ingestFeed(input: {
         continue;
       }
 
+      const duplicate = await findDuplicate(input.catalog, {
+        sourceId: source.id,
+        url: normalized.url,
+        externalId: normalized.externalId,
+        contentHash: normalized.contentHash,
+        matchTitle: normalized.matchTitle,
+        summary: normalized.summary,
+        publishedAt: normalized.publishedAt,
+      });
+
+      if (duplicate && isHardDuplicate(duplicate.reason)) {
+        itemsDuplicate += 1;
+        duplicateReasons[duplicate.reason] += 1;
+        continue;
+      }
+
       const inserted = await input.catalog.ingestArticle({
         sourceId: source.id,
         title: normalized.title,
@@ -53,15 +80,23 @@ export async function ingestFeed(input: {
         publishedAt: normalized.publishedAt,
         summary: normalized.summary,
         contentHash: normalized.contentHash,
+        normalizedTitle: normalized.matchTitle,
         externalId: normalized.externalId,
         author: normalized.author,
-        status: 'NORMALIZED',
+        status: duplicate ? 'DUPLICATE' : 'NORMALIZED',
+        duplicateOfArticleId: duplicate?.articleId,
       });
 
       if (inserted) {
-        itemsInserted += 1;
+        if (duplicate) {
+          itemsDuplicate += 1;
+          duplicateReasons[duplicate.reason] += 1;
+        } else {
+          itemsInserted += 1;
+        }
       } else {
         itemsDuplicate += 1;
+        duplicateReasons.URL += 1;
       }
     }
 
@@ -81,6 +116,7 @@ export async function ingestFeed(input: {
       itemsInserted,
       itemsDuplicate,
       itemsRejected,
+      duplicateReasons,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Ingestion failed';
@@ -101,6 +137,7 @@ export async function ingestFeed(input: {
       itemsInserted,
       itemsDuplicate,
       itemsRejected,
+      duplicateReasons,
       errorMessage,
     };
   }

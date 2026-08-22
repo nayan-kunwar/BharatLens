@@ -78,6 +78,16 @@ Public impact history is **published snapshots only**. Draft assessments are not
 
 `packages/ingestion` fetches public RSS/Atom feeds from a CLI (`pnpm ingest:rss`). It stores source + article **metadata** only, hashes a normalized fingerprint, and records `ingestion_jobs`. It does not create events and does not use BullMQ.
 
+## M6 article deduplication
+
+After M5 unique URL / guid, ingest classifies remaining items:
+
+1. Content hash of normalized title + day + summary
+2. Exact normalized title inside a 48-hour window
+3. Token overlap inside that window (not embeddings)
+
+Hard matches skip insert. Soft matches insert `articles.status = DUPLICATE` with `duplicate_of_article_id`. No candidate events yet.
+
 ## Next
 
-M6 is article deduplication beyond unique URL (normalized title, time window, entity overlap).
+M7 is claims and evidence on events (not automatic LLM extraction from every RSS item).

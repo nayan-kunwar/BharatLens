@@ -24,6 +24,10 @@ export const sourcesRelations = relations(sources, ({ many }) => ({
 export const articlesRelations = relations(articles, ({ one, many }) => ({
   source: one(sources, { fields: [articles.sourceId], references: [sources.id] }),
   events: many(eventArticles),
+  duplicateOf: one(articles, {
+    fields: [articles.duplicateOfArticleId],
+    references: [articles.id],
+  }),
 }));
 
 export const countriesRelations = relations(countries, ({ many }) => ({

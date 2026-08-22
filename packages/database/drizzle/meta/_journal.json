@@ -15,6 +15,13 @@
       "when": 1787433600000,
       "tag": "0001_ingestion_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787437200000,
+      "tag": "0002_article_dedupe",
+      "breakpoints": true
     }
   ]
 }

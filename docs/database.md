@@ -32,20 +32,22 @@ There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 ## Constraints worth knowing
 
 - `events.slug` unique — public URLs
-- `articles.url` unique — ingest dedupe
+- `articles.url` unique — ingest URL dedupe
+- `articles (source_id, external_id)` unique — RSS guid per source
+- `articles.duplicate_of_article_id` — soft duplicate pointer (`ON DELETE SET NULL`)
 - `impact_assessments (event_id, version)` unique — append-only versions
 - Circular FK: assessments reference events; events reference the current assessment (`ON DELETE SET NULL`)
 
 ## Indexes (and why)
 
-| Index                                                  | Why                      |
-| ------------------------------------------------------ | ------------------------ |
-| `events_status_idx`                                    | Admin vs public listings |
-| `events_occurred_at_idx` / `events_published_at_idx`   | Chronological pages      |
-| `articles_source_id_idx` / `articles_published_at_idx` | Ingest browse            |
-| `claims_event_id_idx`                                  | Event detail             |
-| `evidence_claim_id_idx`                                | Evidence panel           |
-| `impact_assessments_event_id_idx`                      | History                  |
+| Index                                                         | Why                      |
+| ------------------------------------------------------------- | ------------------------ |
+| `events_status_idx`                                           | Admin vs public listings |
+| `events_occurred_at_idx` / `events_published_at_idx`          | Chronological pages      |
+| `articles_content_hash_idx` / `articles_normalized_title_idx` | Dedupe lookups           |
+| `claims_event_id_idx`                                         | Event detail             |
+| `evidence_claim_id_idx`                                       | Evidence panel           |
+| `impact_assessments_event_id_idx`                             | History                  |
 
 ## Domain service
 

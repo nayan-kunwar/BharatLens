@@ -12,6 +12,7 @@ export default tseslint.config(
       'apps/web/.next/**',
       '**/*.config.ts',
       '**/drizzle.config.ts',
+      'packages/database/drizzle/**',
     ],
   },
   eslint.configs.recommended,

@@ -153,6 +153,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@bharatlens/shared':
+        specifier: workspace:*
+        version: link:../shared
       drizzle-orm:
         specifier: ^0.44.4
         version: 0.44.7(postgres@3.4.9)
@@ -163,6 +166,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.4
         version: 0.31.10
+      tsx:
+        specifier: ^4.20.4
+        version: 4.23.12
       typescript:
         specifier: ^5.9.2
         version: 5.9.3

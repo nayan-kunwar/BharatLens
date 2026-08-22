@@ -32,12 +32,13 @@ API_BASE_URL   (web only, Docker)
 
 From the repository root:
 
-| Command          | Purpose                        |
-| ---------------- | ------------------------------ |
-| `pnpm test`      | Unit tests (Vitest)            |
-| `pnpm typecheck` | `tsc --noEmit` in each package |
-| `pnpm lint`      | ESLint                         |
-| `pnpm format`    | Prettier                       |
+| Command           | Purpose                        |
+| ----------------- | ------------------------------ |
+| `pnpm db:migrate` | Apply Drizzle SQL migrations   |
+| `pnpm test`       | Unit tests (Vitest)            |
+| `pnpm typecheck`  | `tsc --noEmit` in each package |
+| `pnpm lint`       | ESLint                         |
+| `pnpm format`     | Prettier                       |
 
 API and worker run TypeScript directly in development via `tsx`.
 
@@ -54,8 +55,8 @@ Responses use the envelope `{ success, data, meta }` / `{ success, error }`.
 
 Pino JSON logs in production. Pretty printing only when `NODE_ENV=development`. Secrets in known fields are redacted.
 
-## What not to add in M0 follow-ups
+## What not to add yet
 
 - BullMQ queues or processors
-- Domain tables
+- REST event APIs (M2)
 - Elasticsearch, Kafka, extra services in Compose

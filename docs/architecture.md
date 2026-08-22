@@ -1,4 +1,4 @@
-# Architecture (M0)
+# Architecture
 
 BharatLens is a **modular monolith**: one API process, one idle worker process, one Next.js frontend, PostgreSQL as the source of truth, Redis present but unused for product logic until there is a real need.
 
@@ -20,7 +20,7 @@ Worker (apps/worker)
         └── heartbeat     ping Postgres + Redis every 30s
 ```
 
-There are **no domain modules** yet (`events`, `claims`, `impact`). Empty folders would be ceremony.
+There are **no HTTP event routes** yet (M2). Domain tables and `EventCatalog` live in `packages/database`.
 
 ## Why an idle worker exists now
 
@@ -41,4 +41,4 @@ Redis is required later for rate limiting and BullMQ. M0 only checks connectivit
 
 ## Next
 
-M1 adds the relational domain (events, claims, evidence, versioned `impact_assessments`) with no `india_impacts` 1:1 table.
+M2 adds public REST for events, claims, impact, and updates.

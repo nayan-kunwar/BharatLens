@@ -1,21 +1,52 @@
-# Database (M0)
+# Database (M1)
 
-PostgreSQL 16 is the source of truth.
+PostgreSQL 16 is the source of truth. Schema lives in `packages/database`. Apply it with:
 
-Drizzle ORM is wired in `packages/database`:
+```bash
+docker compose up -d postgres redis
+pnpm db:migrate
+```
 
-- `createDatabase(url)` — `postgres.js` pool + Drizzle
-- `pingDatabase(sql)` — `SELECT 1`
-- `src/schema.ts` — empty on purpose
+Host port is **5433** (container 5432) so a local Postgres on 5432 does not intercept connections. Inside Compose, apps still use `postgres:5432`.
 
-There are **no domain migrations** in M0. Drizzle Kit config (`drizzle.config.ts`) exists so M1 migrations use the same path.
+## Entities
 
-## What M1 will add
+| Table                                                 | Role                                                                                             |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `sources`                                             | Publishers (Reuters, MEA, …)                                                                     |
+| `articles`                                            | Ingested article metadata. Status starts at `INGESTED`, not on events.                           |
+| `events`                                              | One table for candidates and published events (`status`).                                        |
+| `event_articles` / `event_countries` / `event_topics` | Many-to-many                                                                                     |
+| `claims`                                              | Statements on an **event**. Optional `article_id` / `source_id`. `evidence_strength` lives here. |
+| `evidence`                                            | Short excerpts + URLs supporting a claim (max 500 chars).                                        |
+| `event_updates`                                       | Timeline rows                                                                                    |
+| `watch_items`                                         | “What to watch”                                                                                  |
+| `impact_assessments`                                  | Versioned India Impact (`v1`, `v2`, …). `analysis_confidence` lives here.                        |
+| `impact_category_levels`                              | Per-category levels so the UI does not hardcode columns                                          |
+| `events.current_impact_assessment_id`                 | Pointer to the current published assessment. Not a second impact table.                          |
 
-See `AGENTS.md`: `events` (candidates via `status`), `articles`, `claims`, `evidence`, versioned `impact_assessments`, unique `(event_id, version)`, `events.current_impact_assessment_id`.
+There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 
-No `india_impacts` 1:1 table. No separate `candidate_events` table.
+## Constraints worth knowing
 
-## Indexes
+- `events.slug` unique — public URLs
+- `articles.url` unique — ingest dedupe
+- `impact_assessments (event_id, version)` unique — append-only versions
+- Circular FK: assessments reference events; events reference the current assessment (`ON DELETE SET NULL`)
 
-None yet. Indexes will be added with the tables they serve, each with a written reason.
+## Indexes (and why)
+
+| Index                                                  | Why                      |
+| ------------------------------------------------------ | ------------------------ |
+| `events_status_idx`                                    | Admin vs public listings |
+| `events_occurred_at_idx` / `events_published_at_idx`   | Chronological pages      |
+| `articles_source_id_idx` / `articles_published_at_idx` | Ingest browse            |
+| `claims_event_id_idx`                                  | Event detail             |
+| `evidence_claim_id_idx`                                | Evidence panel           |
+| `impact_assessments_event_id_idx`                      | History                  |
+
+## Domain service
+
+`EventCatalog` in `packages/database` is the write API for M1 (create event, attach article, claims/evidence, versioned assessments, timeline). REST is M2.
+
+Evidence strength is **computed** from linked sources, not an LLM percentage. Analysis confidence is a separate field on assessments.

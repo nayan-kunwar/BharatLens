@@ -58,5 +58,5 @@ Pino JSON logs in production. Pretty printing only when `NODE_ENV=development`. 
 ## What not to add yet
 
 - BullMQ queues or processors
-- REST event APIs (M2)
+- Admin write APIs (M10)
 - Elasticsearch, Kafka, extra services in Compose

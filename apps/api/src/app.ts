@@ -5,6 +5,7 @@ import type { AppConfig } from '@bharatlens/config';
 import { createDatabase } from '@bharatlens/database';
 import errorHandler from './plugins/error-handler.js';
 import requestId from './plugins/request-id.js';
+import { publicApi } from './plugins/public-api.js';
 import { createRedis } from './infrastructure/redis.js';
 import { healthRoutes, type HealthDeps } from './routes/health.js';
 
@@ -35,6 +36,7 @@ export async function buildApp(config: AppConfig) {
 
   const deps: HealthDeps = { database, redis };
   await app.register(healthRoutes, deps);
+  await app.register(publicApi, { db: database.db });
 
   return { app, deps };
 }

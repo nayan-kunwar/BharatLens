@@ -8,6 +8,8 @@ export const EVENT_STATUSES = [
   'ARCHIVED',
 ] as const;
 
+export const PUBLIC_EVENT_STATUSES = ['PUBLISHED', 'UPDATED'] as const;
+export type PublicEventStatus = (typeof PUBLIC_EVENT_STATUSES)[number];
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 
 export const IMPORTANCE_LEVELS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;

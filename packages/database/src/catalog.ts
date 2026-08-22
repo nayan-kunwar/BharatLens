@@ -1,6 +1,7 @@
 import {
   type AnalysisConfidence,
   type ArticleStatus,
+  type ClaimStatus,
   type ClaimType,
   type EventStatus,
   type EvidenceStrength,
@@ -209,6 +210,7 @@ export class EventCatalog {
     eventId: string;
     statement: string;
     type: ClaimType;
+    status?: ClaimStatus;
     sourceId?: string;
     articleId?: string;
   }) {
@@ -220,6 +222,7 @@ export class EventCatalog {
         eventId: input.eventId,
         statement: input.statement,
         type: input.type,
+        status: input.status ?? 'PENDING',
         sourceId: input.sourceId,
         articleId: input.articleId,
       })

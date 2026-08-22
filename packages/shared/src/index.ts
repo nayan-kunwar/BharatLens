@@ -34,6 +34,8 @@ export const ErrorCode = {
   SOURCE_NOT_FOUND: 'SOURCE_NOT_FOUND',
   DUPLICATE_EVENT: 'DUPLICATE_EVENT',
   INSUFFICIENT_EVIDENCE: 'INSUFFICIENT_EVIDENCE',
+  COUNTRY_NOT_FOUND: 'COUNTRY_NOT_FOUND',
+  TOPIC_NOT_FOUND: 'TOPIC_NOT_FOUND',
 } as const;
 
 export { DomainError } from './errors.js';
@@ -44,6 +46,7 @@ export {
   CLAIM_STATUSES,
   CLAIM_TYPES,
   EVENT_STATUSES,
+  PUBLIC_EVENT_STATUSES,
   EVIDENCE_STRENGTHS,
   EXCERPT_MAX_LENGTH,
   IMPACT_CATEGORIES,
@@ -58,6 +61,7 @@ export type {
   ClaimStatus,
   ClaimType,
   EventStatus,
+  PublicEventStatus,
   EvidenceStrength,
   ImpactCategory,
   ImpactLevel,

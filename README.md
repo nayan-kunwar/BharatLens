@@ -4,14 +4,14 @@
 
 BharatLens turns global geopolitical events into source-backed explanations of what they mean for India. **India Impact** is a feature inside BharatLens, not a second product name.
 
-This repository is at **M1 — Core domain**. Events, claims, evidence, and versioned impact assessments exist in PostgreSQL. Public REST is M2.
+This repository is at **M2 — Public REST**. PostgreSQL holds the domain; Fastify serves read-only `/api/v1` for published events.
 
 ## What runs in M0
 
 | Service    | Role                                                       | Port                           |
 | ---------- | ---------------------------------------------------------- | ------------------------------ |
 | `web`      | Next.js homepage                                           | 3000                           |
-| `api`      | Fastify liveness + readiness                               | 3101 (host) → 3001 (container) |
+| `api`      | Fastify public REST + health                               | 3101 (host) → 3001 (container) |
 | `worker`   | Idle process (health + Redis/Postgres ping, **no jobs**)   | 3002                           |
 | `postgres` | Source of truth                                            | 5433 (host) → 5432 (container) |
 | `redis`    | Running for connectivity; **not** used as a cache or queue | 6379                           |
@@ -30,6 +30,7 @@ Then:
 - Frontend: http://localhost:3000
 - API liveness: http://localhost:3101/health
 - API readiness (Postgres + Redis): http://localhost:3101/ready
+- API events: http://localhost:3101/api/v1/events
 - Worker liveness: http://localhost:3002/health
 
 Compose publishes the API on host port **3101** because **3001** is commonly used by other local Node apps. Postgres is on host **5433** for the same reason. Inside the Docker network the API still listens on 3001 and Postgres on 5432.
@@ -79,6 +80,7 @@ packages/shared   API envelope + domain enums/lifecycle
 ## Docs
 
 - [Architecture](docs/architecture.md)
+- [API](docs/api.md)
 - [Development](docs/development.md)
 - [Database](docs/database.md)
 - [Decisions](docs/decisions/)

@@ -8,8 +8,9 @@ Next.js (apps/web)
         ▼
 Fastify API (apps/api, host port 3101 in Compose)
         │
-        ├── GET /health   liveness (no I/O)
-        └── GET /ready    Postgres + Redis ping
+        ├── GET /health
+        ├── GET /ready
+        └── GET /api/v1/*  public events, countries, topics, search
         │
         ▼
    PostgreSQL
@@ -20,7 +21,7 @@ Worker (apps/worker)
         └── heartbeat     ping Postgres + Redis every 30s
 ```
 
-There are **no HTTP event routes** yet (M2). Domain tables and `EventCatalog` live in `packages/database`.
+There are **no write/admin routes** yet (M10). Public GETs are implemented.
 
 ## Why an idle worker exists now
 
@@ -41,4 +42,4 @@ Redis is required later for rate limiting and BullMQ. M0 only checks connectivit
 
 ## Next
 
-M2 adds public REST for events, claims, impact, and updates.
+M3 adds the Next.js event UI on top of these GETs.

@@ -1,0 +1,28 @@
+{
+  "name": "@bharatlens/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@bharatlens/config": "workspace:*",
+    "@bharatlens/database": "workspace:*",
+    "@bharatlens/logging": "workspace:*",
+    "@bharatlens/shared": "workspace:*",
+    "fastify": "^5.5.0",
+    "ioredis": "^5.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.17.2",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

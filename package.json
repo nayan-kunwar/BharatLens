@@ -1,0 +1,30 @@
+{
+  "name": "bharatlens",
+  "private": true,
+  "type": "module",
+  "description": "BharatLens — see the world through India's lens.",
+  "packageManager": "pnpm@10.14.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:api": "pnpm --filter @bharatlens/api dev",
+    "dev:worker": "pnpm --filter @bharatlens/worker dev",
+    "dev:web": "pnpm --filter @bharatlens/web dev",
+    "build": "pnpm -r --sort run build",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.40.0",
+    "vitest": "^3.2.4"
+  }
+}

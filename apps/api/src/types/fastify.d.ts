@@ -1,0 +1,7 @@
+declare module 'fastify' {
+  interface FastifyRequest {
+    requestId: string;
+  }
+}
+
+export {};

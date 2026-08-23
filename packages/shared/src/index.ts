@@ -78,6 +78,13 @@ export {
   nextStatusAfterTimelineUpdate,
 } from './lifecycle.js';
 export { compareImpactLevel, diffCategoryLevels, mergeEventChronology } from './timeline.js';
+export {
+  classifyClaimType,
+  computeEvidenceStrength,
+  describeEvidenceCounts,
+  isOfficialSourceType,
+  OFFICIAL_SOURCE_TYPES,
+} from './evidence.js';
 export type {
   CategoryLevel,
   CategoryLevelChange,

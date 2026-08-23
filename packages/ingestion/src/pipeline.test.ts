@@ -28,9 +28,9 @@ describe.skipIf(!databaseUrl)('ingest pipeline (postgres)', () => {
     const suffix = randomUUID().slice(0, 8);
     const articles: RawArticle[] = [
       {
-        title: 'First shipping report',
+        title: `First shipping report ${suffix}`,
         url: `https://example.test/ingest-${suffix}`,
-        summary: 'Metadata only.',
+        summary: `Metadata only ${suffix}.`,
       },
       {
         title: '  ',
@@ -82,10 +82,10 @@ describe.skipIf(!databaseUrl)('ingest pipeline (postgres)', () => {
       adapter: {
         fetchArticles: async () => [
           {
-            title: 'Strait of Hormuz shipping disruption',
+            title: `Strait of Hormuz shipping disruption ${suffix}`,
             url: `https://example.test/a-${suffix}`,
-            publishedAt: '2026-08-20T00:00:00.000Z',
-            summary: 'Maritime disruption near Hormuz.',
+            publishedAt: '2019-03-04T00:00:00.000Z',
+            summary: `Maritime disruption near Hormuz ${suffix}.`,
           },
         ],
       },
@@ -96,10 +96,10 @@ describe.skipIf(!databaseUrl)('ingest pipeline (postgres)', () => {
       adapter: {
         fetchArticles: async () => [
           {
-            title: 'Strait of Hormuz: shipping disruption',
+            title: `Strait of Hormuz: shipping disruption ${suffix}`,
             url: `https://example.test/b-${suffix}`,
-            publishedAt: '2026-08-20T06:00:00.000Z',
-            summary: 'Different outlet, same situation.',
+            publishedAt: '2019-03-04T06:00:00.000Z',
+            summary: `Different outlet, same situation ${suffix}.`,
           },
         ],
       },

@@ -64,7 +64,7 @@ token overlap within 48 hours (shared significant tokens + a gazetteer entity)
 
 This is **not** semantic embeddings and not a vector database. False positives are reduced by requiring a time window and, for the overlap layer, a named token such as a country or "hormuz". False negatives (same story, different wording, no shared tokens) are accepted until there is evidence they matter.
 
-Ingest still does **not** create events.
+Ingest still does **not** create events. `pnpm claims:extract` (M7) may attach articles to existing published events when they share a gazetteer entity and at least two significant tokens with the event. That matcher is looser than M6 dedupe on purpose: collapsing two URLs as duplicates must be precise; attaching evidence can tolerate a shorter official brief.
 
 ## CLI
 

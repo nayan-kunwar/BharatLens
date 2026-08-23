@@ -153,6 +153,27 @@ export function isEntityOverlapMatch(leftText: string, rightText: string): boole
   return shared >= 3 && overlap >= 0.5 && sharedEntities >= 1;
 }
 
+/**
+ * Article-to-event linking is recall-oriented. Dedupe above is precision-oriented
+ * (high Jaccard or dense overlap) so two outlets are not collapsed by accident.
+ * Coverage only needs a shared gazetteer entity plus two significant tokens —
+ * otherwise an official brief that does not copy the event title would never attach.
+ */
+export function isEventCoverageMatch(eventText: string, articleText: string): boolean {
+  const eventTokens = significantTokens(eventText);
+  const articleTokens = significantTokens(articleText);
+  if (eventTokens.size === 0 || articleTokens.size === 0) {
+    return false;
+  }
+
+  const shared = sharedCount(eventTokens, articleTokens);
+  const sharedEntities = sharedCount(
+    namedEntityTokens(eventTokens),
+    namedEntityTokens(articleTokens),
+  );
+  return sharedEntities >= 1 && shared >= 2;
+}
+
 export function isHardDuplicate(reason: DuplicateReason): boolean {
   return (HARD_DUPLICATE_REASONS as readonly string[]).includes(reason);
 }

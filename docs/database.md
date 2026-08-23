@@ -35,6 +35,8 @@ There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 - `articles.url` unique — ingest URL dedupe
 - `articles (source_id, external_id)` unique — RSS guid per source
 - `articles.duplicate_of_article_id` — soft duplicate pointer (`ON DELETE SET NULL`)
+- `claims (event_id, statement)` unique — idempotent extract
+- `evidence (claim_id, url)` unique — one URL per claim
 - `impact_assessments (event_id, version)` unique — append-only versions
 - Circular FK: assessments reference events; events reference the current assessment (`ON DELETE SET NULL`)
 

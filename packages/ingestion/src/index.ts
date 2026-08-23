@@ -13,6 +13,7 @@ export {
   DEDUPE_WINDOW_HOURS,
   findDuplicate,
   isEntityOverlapMatch,
+  isEventCoverageMatch,
   isHardDuplicate,
 } from './dedupe.js';
 export type { DuplicateMatch, DuplicateReason } from './dedupe.js';
@@ -20,3 +21,5 @@ export { ingestFeed } from './pipeline.js';
 export type { IngestSourceResult } from './pipeline.js';
 export { parseFeedXml } from './rss.js';
 export { RssAdapter } from './rss-adapter.js';
+export { extractClaimsForEvent, extractClaimsForEvents } from './claims.js';
+export type { ExtractClaimsResult } from './claims.js';

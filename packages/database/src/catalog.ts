@@ -12,10 +12,14 @@ import {
   type SourceType,
   DomainError,
   EXCERPT_MAX_LENGTH,
+  PUBLIC_EVENT_STATUSES,
   assertEventStatusTransition,
+  computeEvidenceStrength,
+  describeEvidenceCounts,
+  isOfficialSourceType,
   nextStatusAfterTimelineUpdate,
 } from '@bharatlens/shared';
-import { and, countDistinct, desc, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
 import type { Database } from './client.js';
 import { articles } from './schema/articles.js';
 import { claims, evidence } from './schema/claims.js';
@@ -34,25 +38,7 @@ import { ingestionJobs } from './schema/ingestion.js';
 import { sources } from './schema/sources.js';
 import { topics } from './schema/topics.js';
 
-export function computeEvidenceStrength(input: {
-  sourceCount: number;
-  independentSourceCount: number;
-  officialSourceCount: number;
-}): EvidenceStrength {
-  if (input.officialSourceCount >= 1 && input.independentSourceCount >= 2) {
-    return 'STRONG';
-  }
-
-  if (input.independentSourceCount >= 2 || input.officialSourceCount >= 1) {
-    return 'MODERATE';
-  }
-
-  if (input.sourceCount >= 1) {
-    return 'WEAK';
-  }
-
-  return 'WEAK';
-}
+export { computeEvidenceStrength } from '@bharatlens/shared';
 
 export class EventCatalog {
   constructor(private readonly db: Database) {}
@@ -384,13 +370,24 @@ export class EventCatalog {
         sourceId: input.sourceId,
         articleId: input.articleId,
       })
+      .onConflictDoNothing()
       .returning();
 
-    if (!row) {
+    if (row) {
+      return row;
+    }
+
+    const [existing] = await this.db
+      .select()
+      .from(claims)
+      .where(and(eq(claims.eventId, input.eventId), eq(claims.statement, input.statement)))
+      .limit(1);
+
+    if (!existing) {
       throw new DomainError('INTERNAL_ERROR', 'Failed to create claim');
     }
 
-    return row;
+    return existing;
   }
 
   async addEvidence(input: {
@@ -400,7 +397,6 @@ export class EventCatalog {
     excerpt?: string;
     articleId?: string;
     publishedAt?: Date;
-    official?: boolean;
   }) {
     if (input.excerpt && input.excerpt.length > EXCERPT_MAX_LENGTH) {
       throw new DomainError(
@@ -415,25 +411,34 @@ export class EventCatalog {
         throw new DomainError('VALIDATION_ERROR', 'Claim not found');
       }
 
-      await tx.insert(evidence).values({
-        claimId: input.claimId,
-        sourceId: input.sourceId,
-        url: input.url,
-        excerpt: input.excerpt,
-        articleId: input.articleId,
-        publishedAt: input.publishedAt,
-      });
+      await tx
+        .insert(evidence)
+        .values({
+          claimId: input.claimId,
+          sourceId: input.sourceId,
+          url: input.url,
+          excerpt: input.excerpt,
+          articleId: input.articleId,
+          publishedAt: input.publishedAt,
+        })
+        .onConflictDoNothing();
 
-      const [counts] = await tx
+      const evidenceRows = await tx
         .select({
-          sourceCount: countDistinct(evidence.sourceId),
+          sourceId: evidence.sourceId,
+          type: sources.type,
         })
         .from(evidence)
+        .innerJoin(sources, eq(sources.id, evidence.sourceId))
         .where(eq(evidence.claimId, input.claimId));
 
-      const sourceCount = Number(counts?.sourceCount ?? 0);
+      const sourceIds = new Set(evidenceRows.map((row) => row.sourceId));
+      const officialIds = new Set(
+        evidenceRows.filter((row) => isOfficialSourceType(row.type)).map((row) => row.sourceId),
+      );
+      const sourceCount = sourceIds.size;
       const independentSourceCount = sourceCount;
-      const officialSourceCount = input.official ? 1 : 0;
+      const officialSourceCount = officialIds.size;
       const strength = computeEvidenceStrength({
         sourceCount,
         independentSourceCount,
@@ -447,6 +452,12 @@ export class EventCatalog {
           independentSourceCount,
           officialSourceCount,
           evidenceStrength: strength,
+          evidenceReason: describeEvidenceCounts({
+            sourceCount,
+            independentSourceCount,
+            officialSourceCount,
+            evidenceStrength: strength,
+          }),
           updatedAt: new Date(),
         })
         .where(eq(claims.id, input.claimId))
@@ -454,6 +465,46 @@ export class EventCatalog {
 
       return updated;
     });
+  }
+
+  async getEventBySlug(slug: string) {
+    const [event] = await this.db.select().from(events).where(eq(events.slug, slug)).limit(1);
+    return event ?? null;
+  }
+
+  async listPublicEvents() {
+    return this.db
+      .select()
+      .from(events)
+      .where(inArray(events.status, [...PUBLIC_EVENT_STATUSES]));
+  }
+
+  async listClaimsForEvent(eventId: string) {
+    return this.db.select().from(claims).where(eq(claims.eventId, eventId));
+  }
+
+  async listLinkedArticles(eventId: string) {
+    return this.db
+      .select({
+        id: articles.id,
+        sourceId: articles.sourceId,
+        title: articles.title,
+        url: articles.url,
+        summary: articles.summary,
+        publishedAt: articles.publishedAt,
+        status: articles.status,
+        normalizedTitle: articles.normalizedTitle,
+      })
+      .from(eventArticles)
+      .innerJoin(articles, eq(articles.id, eventArticles.articleId))
+      .where(eq(eventArticles.eventId, eventId));
+  }
+
+  async listCanonicalArticles() {
+    return this.db
+      .select()
+      .from(articles)
+      .where(inArray(articles.status, ['INGESTED', 'NORMALIZED', 'LINKED']));
   }
 
   async addUpdate(input: {

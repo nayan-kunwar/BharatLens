@@ -1,4 +1,13 @@
-import { index, integer, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
 import { articles } from './articles.js';
 import { claimStatusEnum, claimTypeEnum, evidenceStrengthEnum } from './enums.js';
 import { events } from './events.js';
@@ -24,7 +33,10 @@ export const claims = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index('claims_event_id_idx').on(table.eventId)],
+  (table) => [
+    index('claims_event_id_idx').on(table.eventId),
+    uniqueIndex('claims_event_id_statement_idx').on(table.eventId, table.statement),
+  ],
 );
 
 export const evidence = pgTable(
@@ -44,5 +56,8 @@ export const evidence = pgTable(
     retrievedAt: timestamp('retrieved_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index('evidence_claim_id_idx').on(table.claimId)],
+  (table) => [
+    index('evidence_claim_id_idx').on(table.claimId),
+    uniqueIndex('evidence_claim_id_url_idx').on(table.claimId, table.url),
+  ],
 );

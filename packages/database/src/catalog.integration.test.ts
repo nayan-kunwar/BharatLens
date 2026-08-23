@@ -8,6 +8,20 @@ import { events, impactAssessments } from './schema/events.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 
+/** User-assigned ISO-like codes (X*) avoid colliding with seeded IN/IR/US and hex prefixes like "29". */
+function countryCodeFromSuffix(suffix: string): string {
+  const n = Number.parseInt(suffix.replace(/[^0-9a-f]/gi, '').slice(0, 8) || '1', 16);
+  const reserved = new Set(['AE', 'CN', 'DE', 'GB', 'IN', 'IR', 'JP', 'PK', 'RU', 'SA', 'US']);
+  for (let i = 0; i < 700; i += 1) {
+    const value = n + i;
+    const code = `${String.fromCharCode(65 + (value % 26))}${String.fromCharCode(65 + (Math.floor(value / 26) % 26))}`;
+    if (!reserved.has(code)) {
+      return code;
+    }
+  }
+  return 'ZZ';
+}
+
 describe.skipIf(!databaseUrl)('event catalog (postgres)', () => {
   let pool: DatabasePool;
   let catalog: EventCatalog;
@@ -31,7 +45,7 @@ describe.skipIf(!databaseUrl)('event catalog (postgres)', () => {
     });
 
     const iran = await catalog.createCountry({
-      code: suffix.slice(0, 2).toUpperCase(),
+      code: countryCodeFromSuffix(suffix),
       name: `Iran ${suffix}`,
       slug: `iran-${suffix}`,
     });
@@ -73,7 +87,6 @@ describe.skipIf(!databaseUrl)('event catalog (postgres)', () => {
       url: article.url,
       excerpt: 'Shipping disruption reported.',
       articleId: article.id,
-      official: false,
     });
 
     expect(updatedClaim?.evidenceStrength).toBe('WEAK');

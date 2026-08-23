@@ -22,6 +22,13 @@
       "when": 1787437200000,
       "tag": "0002_article_dedupe",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787440800000,
+      "tag": "0003_claim_evidence_unique",
+      "breakpoints": true
     }
   ]
 }

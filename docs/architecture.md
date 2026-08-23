@@ -88,6 +88,10 @@ After M5 unique URL / guid, ingest classifies remaining items:
 
 Hard matches skip insert. Soft matches insert `articles.status = DUPLICATE` with `duplicate_of_article_id`. No candidate events yet.
 
+## M7 claims and evidence
+
+Deterministic extraction (`pnpm claims:extract`) attaches RSS articles that share a gazetteer entity and two significant tokens with a published event, then records short evidence URLs. That coverage matcher is looser than M6 duplicate detection. New claims are **PENDING** and never typed FACT. `evidence_strength` is recounted from distinct linked sources (official = government / international org). Public GET still returns approved claims only. LLM claim extraction is M8.
+
 ## Next
 
-M7 is claims and evidence on events (not automatic LLM extraction from every RSS item).
+M8 is structured AI analysis (Zod, prompt version, `analysis_runs`) invoked from CLI/admin — not on public GET, and not an evaluation harness.

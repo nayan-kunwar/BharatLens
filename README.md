@@ -4,7 +4,7 @@
 
 BharatLens turns global geopolitical events into source-backed explanations of what they mean for India. **India Impact** is a feature inside BharatLens, not a second product name.
 
-This repository is at **M6 — Deduplication**. Ingested articles are matched by URL, source external ID, content hash, then normalized title and token overlap inside a 48-hour window. Events remain hand-authored.
+This repository is at **M7 — Evidence and Claims**. Ingested article metadata can be attached to events as short evidence. Auto-extracted claims are PENDING and never labeled FACT. Public pages still show approved, hand-authored claims.
 
 ## What runs in M0
 
@@ -52,6 +52,7 @@ pnpm --filter @bharatlens/database build
 pnpm db:migrate
 pnpm db:seed
 pnpm ingest:rss
+pnpm claims:extract
 pnpm dev:api
 pnpm dev:worker
 pnpm dev:web
@@ -89,4 +90,5 @@ packages/shared   API envelope + domain enums/lifecycle
 - [Development](docs/development.md)
 - [Database](docs/database.md)
 - [Ingestion](docs/ingestion.md)
+- [Evidence](docs/evidence.md)
 - [Decisions](docs/decisions/)

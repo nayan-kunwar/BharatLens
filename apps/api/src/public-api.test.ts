@@ -13,6 +13,19 @@ import { publicApi } from './plugins/public-api.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 
+function testCountryCode(suffix: string): string {
+  const n = Number.parseInt(suffix.replace(/[^0-9a-f]/gi, '').slice(0, 8) || '1', 16);
+  const reserved = new Set(['AE', 'CN', 'DE', 'GB', 'IN', 'IR', 'JP', 'PK', 'RU', 'SA', 'US']);
+  for (let i = 0; i < 700; i += 1) {
+    const value = n + i;
+    const code = `${String.fromCharCode(65 + (value % 26))}${String.fromCharCode(65 + (Math.floor(value / 26) % 26))}`;
+    if (!reserved.has(code)) {
+      return code;
+    }
+  }
+  return 'ZZ';
+}
+
 describe.skipIf(!databaseUrl)('public API v1', () => {
   let pool: DatabasePool;
   let catalog: EventCatalog;
@@ -26,7 +39,7 @@ describe.skipIf(!databaseUrl)('public API v1', () => {
     catalog = new EventCatalog(pool.db);
     const suffix = randomUUID().slice(0, 8);
     slug = `hormuz-api-${suffix}`;
-    countryCode = suffix.slice(0, 2).toUpperCase();
+    countryCode = testCountryCode(suffix);
 
     const source = await catalog.createSource({
       name: `AP ${suffix}`,

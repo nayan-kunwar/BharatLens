@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isEntityOverlapMatch, jaccard, significantTokens } from './dedupe.js';
+import {
+  isEntityOverlapMatch,
+  isEventCoverageMatch,
+  jaccard,
+  significantTokens,
+} from './dedupe.js';
 
 describe('article dedupe matching', () => {
   it('treats punctuation-equivalent titles as the same token set', () => {
@@ -22,5 +27,17 @@ describe('article dedupe matching', () => {
         'china announces new semiconductor export rules',
       ),
     ).toBe(false);
+  });
+
+  it('links official briefs to an event with a shared place token even when titles differ', () => {
+    const event =
+      'Strait of Hormuz shipping disruption Maritime disruption reported near Hormuz affecting crude shipping.';
+    const official =
+      'UN notes Hormuz shipping disruption and India energy exposure Official note on shipping disruption near Hormuz.';
+    const unrelated = 'India wins cricket series against Australia after a late collapse.';
+
+    expect(isEventCoverageMatch(event, official)).toBe(true);
+    expect(isEntityOverlapMatch(event, official)).toBe(false);
+    expect(isEventCoverageMatch(event, unrelated)).toBe(false);
   });
 });

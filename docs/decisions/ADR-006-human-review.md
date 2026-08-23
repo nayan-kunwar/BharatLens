@@ -8,7 +8,7 @@ Geopolitical analysis can hallucinate sources, quotes, and certainty. Publishing
 
 AI analysis will never auto-publish. Pipeline: candidate event → analysis run → human review → publish. Evidence and claims come before impact prose.
 
-This ADR records the product rule now; implementation is M8–M10.
+This ADR records the product rule now; M8 stores draft analysis and `analysis_runs`. Publish/reject UI is M10.
 
 ## Alternatives
 
@@ -21,4 +21,4 @@ Slower publication. Higher trust.
 
 ## Consequences
 
-`analysis_runs` store model, prompt version, and output. Evaluation harnesses wait until M15.
+`analysis_runs` store model, prompt version, input references, and validated output. Evaluation harnesses wait until M15. The M8 CLI is `pnpm analyze:event`.

@@ -90,8 +90,12 @@ Hard matches skip insert. Soft matches insert `articles.status = DUPLICATE` with
 
 ## M7 claims and evidence
 
-Deterministic extraction (`pnpm claims:extract`) attaches RSS articles that share a gazetteer entity and two significant tokens with a published event, then records short evidence URLs. That coverage matcher is looser than M6 duplicate detection. New claims are **PENDING** and never typed FACT. `evidence_strength` is recounted from distinct linked sources (official = government / international org). Public GET still returns approved claims only. LLM claim extraction is M8.
+Deterministic extraction (`pnpm claims:extract`) attaches RSS articles that share a gazetteer entity and two significant tokens with a published event, then records short evidence URLs. That coverage matcher is looser than M6 duplicate detection. New claims are **PENDING** and never typed FACT. `evidence_strength` is recounted from distinct linked sources (official = government / international org). Public GET still returns approved claims only.
+
+## M8 structured analysis
+
+`pnpm analyze:event -- --event=<slug>` loads event metadata, calls a model (or a deterministic stub), validates JSON with Zod, and stores an `analysis_runs` row plus a **DRAFT** impact assessment. `evidence_strength` is still computed from linked evidence. `analysis_confidence` is an estimate. Public GET does not invoke a model.
 
 ## Next
 
-M8 is structured AI analysis (Zod, prompt version, `analysis_runs`) invoked from CLI/admin — not on public GET, and not an evaluation harness.
+M9 is real BullMQ (move ingest/analysis off the CLI). M10 is human review of `REVIEW_REQUIRED` events.

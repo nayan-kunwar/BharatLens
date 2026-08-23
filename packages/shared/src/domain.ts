@@ -78,4 +78,7 @@ export type SourceType = (typeof SOURCE_TYPES)[number];
 export const INGESTION_JOB_STATUSES = ['RUNNING', 'SUCCEEDED', 'FAILED'] as const;
 export type IngestionJobStatus = (typeof INGESTION_JOB_STATUSES)[number];
 
+export const ANALYSIS_RUN_STATUSES = ['RUNNING', 'SUCCEEDED', 'FAILED'] as const;
+export type AnalysisRunStatus = (typeof ANALYSIS_RUN_STATUSES)[number];
+
 export const EXCERPT_MAX_LENGTH = 500;

@@ -64,3 +64,9 @@ export const ingestionJobStatusEnum = pgEnum('ingestion_job_status', [
   'SUCCEEDED',
   'FAILED',
 ]);
+
+export const analysisRunStatusEnum = pgEnum('analysis_run_status', [
+  'RUNNING',
+  'SUCCEEDED',
+  'FAILED',
+]);

@@ -34,6 +34,7 @@ export const ErrorCode = {
   SOURCE_NOT_FOUND: 'SOURCE_NOT_FOUND',
   DUPLICATE_EVENT: 'DUPLICATE_EVENT',
   INSUFFICIENT_EVIDENCE: 'INSUFFICIENT_EVIDENCE',
+  ANALYSIS_FAILED: 'ANALYSIS_FAILED',
   INGESTION_FAILED: 'INGESTION_FAILED',
   COUNTRY_NOT_FOUND: 'COUNTRY_NOT_FOUND',
   TOPIC_NOT_FOUND: 'TOPIC_NOT_FOUND',
@@ -56,6 +57,7 @@ export {
   IMPORTANCE_LEVELS,
   SOURCE_TYPES,
   INGESTION_JOB_STATUSES,
+  ANALYSIS_RUN_STATUSES,
 } from './domain.js';
 export type {
   AnalysisConfidence,
@@ -71,11 +73,13 @@ export type {
   ImportanceLevel,
   SourceType,
   IngestionJobStatus,
+  AnalysisRunStatus,
 } from './domain.js';
 export {
   assertEventStatusTransition,
   canTransitionEventStatus,
   nextStatusAfterTimelineUpdate,
+  statusesAfterSuccessfulAnalysis,
 } from './lifecycle.js';
 export { compareImpactLevel, diffCategoryLevels, mergeEventChronology } from './timeline.js';
 export {

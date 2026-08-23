@@ -11,7 +11,7 @@ Claims live on the **event**, not only on articles. Optional `articleId` / `sour
 | SCENARIO | A possible future                     |
 | UNKNOWN  | Insufficient reliable information     |
 
-RSS headline extraction **never** assigns FACT. A headline is not a verified fact. FACT stays a reviewer/seed decision.
+RSS headline extraction **never** assigns FACT. Model-generated claims in M8 are also never FACT. FACT stays a reviewer/seed decision.
 
 ## Evidence strength vs analysis confidence
 

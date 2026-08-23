@@ -1,4 +1,5 @@
 import { relations } from 'drizzle-orm';
+import { analysisRuns } from './analysis.js';
 import { articles } from './articles.js';
 import { claims, evidence } from './claims.js';
 import { countries } from './countries.js';
@@ -50,6 +51,7 @@ export const eventsRelations = relations(events, ({ many, one }) => ({
   watchItems: many(watchItems),
   assessments: many(impactAssessments),
   claims: many(claims),
+  analysisRuns: many(analysisRuns),
 }));
 
 export const eventCountriesRelations = relations(eventCountries, ({ one }) => ({
@@ -102,4 +104,8 @@ export const evidenceRelations = relations(evidence, ({ one }) => ({
 
 export const ingestionJobsRelations = relations(ingestionJobs, ({ one }) => ({
   source: one(sources, { fields: [ingestionJobs.sourceId], references: [sources.id] }),
+}));
+
+export const analysisRunsRelations = relations(analysisRuns, ({ one }) => ({
+  event: one(events, { fields: [analysisRuns.eventId], references: [events.id] }),
 }));

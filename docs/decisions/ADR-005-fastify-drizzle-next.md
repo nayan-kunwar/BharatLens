@@ -21,4 +21,4 @@ More explicit wiring than Nest. Drizzle queries are more verbose than Prisma `in
 
 ## Consequences
 
-Zod validates env and will validate LLM JSON later. HTTP and database are different validation edges.
+Zod validates env and LLM JSON (`@bharatlens/ai`). HTTP and database are different validation edges.

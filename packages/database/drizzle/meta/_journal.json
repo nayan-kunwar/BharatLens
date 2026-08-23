@@ -29,6 +29,13 @@
       "when": 1787440800000,
       "tag": "0003_claim_evidence_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787444400000,
+      "tag": "0004_analysis_runs",
+      "breakpoints": true
     }
   ]
 }

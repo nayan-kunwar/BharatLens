@@ -26,22 +26,23 @@ REDIS_URL
 API_BASE_URL   (web; default http://localhost:3001, Compose uses http://api:3001)
 ```
 
-`LLM_API_KEY` and `NEWS_API_KEY` are not defined yet. They will be added when those features exist.
+`LLM_API_KEY` is optional and used only by `pnpm analyze:event`. The API and worker do not read it. `NEWS_API_KEY` is not defined yet.
 
 ## Scripts
 
 From the repository root:
 
-| Command               | Purpose                                 |
-| --------------------- | --------------------------------------- |
-| `pnpm db:migrate`     | Apply Drizzle SQL migrations            |
-| `pnpm db:seed`        | Hand-authored published events          |
-| `pnpm ingest:rss`     | Pull RSS metadata into articles         |
-| `pnpm claims:extract` | Attach article evidence; PENDING claims |
-| `pnpm test`           | Unit tests (Vitest)                     |
-| `pnpm typecheck`      | `tsc --noEmit` in each package          |
-| `pnpm lint`           | ESLint                                  |
-| `pnpm format`         | Prettier                                |
+| Command               | Purpose                                              |
+| --------------------- | ---------------------------------------------------- |
+| `pnpm db:migrate`     | Apply Drizzle SQL migrations                         |
+| `pnpm db:seed`        | Hand-authored published events                       |
+| `pnpm ingest:rss`     | Pull RSS metadata into articles                      |
+| `pnpm claims:extract` | Attach article evidence; PENDING claims              |
+| `pnpm analyze:event`  | Draft India Impact + `analysis_runs` (not published) |
+| `pnpm test`           | Unit tests (Vitest)                                  |
+| `pnpm typecheck`      | `tsc --noEmit` in each package                       |
+| `pnpm lint`           | ESLint                                               |
+| `pnpm format`         | Prettier                                             |
 
 API and worker run TypeScript directly in development via `tsx`.
 
@@ -62,4 +63,5 @@ Pino JSON logs in production. Pretty printing only when `NODE_ENV=development`. 
 
 - BullMQ queues or processors
 - Admin write APIs (M10)
+- AI evaluation harnesses (M15)
 - Elasticsearch, Kafka, extra services in Compose

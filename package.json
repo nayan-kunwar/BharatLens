@@ -20,6 +20,7 @@
     "db:seed": "pnpm --filter @bharatlens/database db:seed",
     "ingest:rss": "pnpm --filter @bharatlens/ingestion ingest",
     "claims:extract": "pnpm --filter @bharatlens/ingestion extract-claims",
+    "analyze:event": "pnpm --filter @bharatlens/ai analyze",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { assertEventStatusTransition, nextStatusAfterTimelineUpdate } from './lifecycle.js';
+import {
+  assertEventStatusTransition,
+  nextStatusAfterTimelineUpdate,
+  statusesAfterSuccessfulAnalysis,
+} from './lifecycle.js';
 import { DomainError } from './errors.js';
 
 describe('event lifecycle', () => {
@@ -14,5 +18,15 @@ describe('event lifecycle', () => {
   it('marks a published event as updated after a timeline entry', () => {
     expect(nextStatusAfterTimelineUpdate('PUBLISHED')).toBe('UPDATED');
     expect(nextStatusAfterTimelineUpdate('DRAFT')).toBe('DRAFT');
+  });
+
+  it('queues unpublished events for review and leaves published events public', () => {
+    expect(statusesAfterSuccessfulAnalysis('CANDIDATE')).toEqual([
+      'DRAFT',
+      'ANALYZED',
+      'REVIEW_REQUIRED',
+    ]);
+    expect(statusesAfterSuccessfulAnalysis('PUBLISHED')).toEqual([]);
+    expect(statusesAfterSuccessfulAnalysis('UPDATED')).toEqual([]);
   });
 });

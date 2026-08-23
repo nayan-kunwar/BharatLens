@@ -4,7 +4,7 @@
 
 BharatLens turns global geopolitical events into source-backed explanations of what they mean for India. **India Impact** is a feature inside BharatLens, not a second product name.
 
-This repository is at **M7 — Evidence and Claims**. Ingested article metadata can be attached to events as short evidence. Auto-extracted claims are PENDING and never labeled FACT. Public pages still show approved, hand-authored claims.
+This repository is at **M8 — AI Analysis**. A CLI can generate a schema-validated draft impact assessment and an `analysis_runs` audit row. Nothing is auto-published. Public pages still show reviewed, published assessments.
 
 ## What runs in M0
 
@@ -53,6 +53,7 @@ pnpm db:migrate
 pnpm db:seed
 pnpm ingest:rss
 pnpm claims:extract
+pnpm analyze:event -- --event=strait-of-hormuz-shipping-disruption
 pnpm dev:api
 pnpm dev:worker
 pnpm dev:web
@@ -80,7 +81,8 @@ packages/config   Zod-validated environment
 packages/database Drizzle schema, migrations, EventCatalog
 packages/logging  Pino
 packages/ingestion RSS adapter + CLI (no BullMQ)
-packages/shared   API envelope + domain enums/lifecycle
+packages/ai         Structured analysis CLI (Zod, analysis_runs)
+packages/shared     API envelope + domain enums/lifecycle
 ```
 
 ## Docs
@@ -91,4 +93,5 @@ packages/shared   API envelope + domain enums/lifecycle
 - [Database](docs/database.md)
 - [Ingestion](docs/ingestion.md)
 - [Evidence](docs/evidence.md)
+- [AI pipeline](docs/ai-pipeline.md)
 - [Decisions](docs/decisions/)

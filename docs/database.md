@@ -26,6 +26,7 @@ Host port is **5433** (container 5432) so a local Postgres on 5432 does not inte
 | `impact_category_levels`                              | Per-category levels so the UI does not hardcode columns                                          |
 | `events.current_impact_assessment_id`                 | Pointer to the current published assessment. Not a second impact table.                          |
 | `ingestion_jobs`                                      | CLI ingest runs (counts, success/failure). Not a BullMQ table.                                   |
+| `analysis_runs`                                       | CLI analysis audit (model, prompt version, input refs, output). Not published.                   |
 
 There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 
@@ -38,6 +39,7 @@ There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 - `claims (event_id, statement)` unique — idempotent extract
 - `evidence (claim_id, url)` unique — one URL per claim
 - `impact_assessments (event_id, version)` unique — append-only versions
+- `analysis_runs.event_id` indexed — audit history per event
 - Circular FK: assessments reference events; events reference the current assessment (`ON DELETE SET NULL`)
 
 ## Indexes (and why)
@@ -50,10 +52,11 @@ There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 | `claims_event_id_idx`                                         | Event detail             |
 | `evidence_claim_id_idx`                                       | Evidence panel           |
 | `impact_assessments_event_id_idx`                             | History                  |
+| `analysis_runs_event_id_idx` / `analysis_runs_status_idx`     | Analysis audit           |
 
 ## Domain service
 
-`EventCatalog` in `packages/database` is the write API (create event, attach article, claims/evidence, versioned assessments, timeline, **idempotent article ingest**). REST is M2. RSS ingest is a CLI in `@bharatlens/ingestion`.
+`EventCatalog` in `packages/database` is the write API (create event, attach article, claims/evidence, versioned assessments, timeline, **idempotent article ingest**, **analysis runs**). REST is M2. RSS ingest is a CLI in `@bharatlens/ingestion`. Analysis is a CLI in `@bharatlens/ai`.
 
 `pnpm db:seed` is idempotent by event slug and **additive for M4**: if the Hormuz example already exists from M3, a second published impact assessment and extra timeline rows are attached instead of skipping the event.
 

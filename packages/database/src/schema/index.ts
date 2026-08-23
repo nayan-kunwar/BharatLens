@@ -1,3 +1,4 @@
+export * from './analysis.js';
 export * from './articles.js';
 export * from './claims.js';
 export * from './countries.js';

@@ -1,5 +1,6 @@
 import {
   type AnalysisConfidence,
+  type AnalysisRunStatus,
   type ArticleStatus,
   type ClaimStatus,
   type ClaimType,
@@ -21,6 +22,7 @@ import {
 } from '@bharatlens/shared';
 import { and, desc, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
 import type { Database } from './client.js';
+import { analysisRuns, type AnalysisInputReferences } from './schema/analysis.js';
 import { articles } from './schema/articles.js';
 import { claims, evidence } from './schema/claims.js';
 import { countries } from './schema/countries.js';
@@ -625,6 +627,120 @@ export class EventCatalog {
 
       return assessment;
     });
+  }
+
+  async loadAnalysisContext(eventId: string) {
+    const event = await this.requireEvent(eventId);
+    const [eventClaims, linkedArticles, linkedCountries, linkedTopics, items, evidenceRows] =
+      await Promise.all([
+        this.listClaimsForEvent(eventId),
+        this.listLinkedArticles(eventId),
+        this.db
+          .select({
+            id: countries.id,
+            code: countries.code,
+            name: countries.name,
+          })
+          .from(eventCountries)
+          .innerJoin(countries, eq(countries.id, eventCountries.countryId))
+          .where(eq(eventCountries.eventId, eventId)),
+        this.db
+          .select({
+            id: topics.id,
+            slug: topics.slug,
+            name: topics.name,
+          })
+          .from(eventTopics)
+          .innerJoin(topics, eq(topics.id, eventTopics.topicId))
+          .where(eq(eventTopics.eventId, eventId)),
+        this.db.select().from(watchItems).where(eq(watchItems.eventId, eventId)),
+        this.db
+          .select({
+            id: evidence.id,
+            claimId: evidence.claimId,
+            sourceId: evidence.sourceId,
+            url: evidence.url,
+            excerpt: evidence.excerpt,
+            sourceType: sources.type,
+          })
+          .from(evidence)
+          .innerJoin(claims, eq(claims.id, evidence.claimId))
+          .innerJoin(sources, eq(sources.id, evidence.sourceId))
+          .where(eq(claims.eventId, eventId)),
+      ]);
+
+    return {
+      event,
+      claims: eventClaims,
+      articles: linkedArticles,
+      countries: linkedCountries,
+      topics: linkedTopics,
+      watchItems: items,
+      evidence: evidenceRows,
+    };
+  }
+
+  async startAnalysisRun(input: {
+    eventId: string;
+    modelName: string;
+    promptVersion: string;
+    inputReferences: AnalysisInputReferences;
+  }) {
+    await this.requireEvent(input.eventId);
+
+    const [row] = await this.db
+      .insert(analysisRuns)
+      .values({
+        eventId: input.eventId,
+        status: 'RUNNING',
+        modelName: input.modelName,
+        promptVersion: input.promptVersion,
+        inputReferences: input.inputReferences,
+      })
+      .returning();
+
+    if (!row) {
+      throw new DomainError('INTERNAL_ERROR', 'Failed to create analysis run');
+    }
+
+    return row;
+  }
+
+  async completeAnalysisRun(
+    runId: string,
+    input: {
+      status: Extract<AnalysisRunStatus, 'SUCCEEDED' | 'FAILED'>;
+      output?: Record<string, unknown>;
+      errorMessage?: string;
+    },
+  ) {
+    const [row] = await this.db
+      .update(analysisRuns)
+      .set({
+        status: input.status,
+        output: input.output,
+        errorMessage: input.errorMessage,
+        generatedAt: new Date(),
+      })
+      .where(eq(analysisRuns.id, runId))
+      .returning();
+
+    return row ?? null;
+  }
+
+  async setEventTypeIfEmpty(eventId: string, eventType: string) {
+    const event = await this.requireEvent(eventId);
+    if (event.eventType) {
+      return event;
+    }
+
+    const [updated] = await this.db
+      .update(events)
+      .set({ eventType, updatedAt: new Date() })
+      .where(eq(events.id, eventId))
+      .returning();
+
+    return updated ?? event;
   }
 
   private async requireEvent(eventId: string) {

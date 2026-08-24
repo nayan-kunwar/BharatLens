@@ -37,7 +37,7 @@ Claims on the public API are `APPROVED` only.
 | GET    | `/api/v1/countries/:code`    |                                                                                                                                                                     |
 | GET    | `/api/v1/topics`             |                                                                                                                                                                     |
 | GET    | `/api/v1/topics/:slug`       |                                                                                                                                                                     |
-| GET    | `/api/v1/search`             | `q` (min 2 chars) plus pagination. ILIKE on title/summary until M12 FTS                                                                                             |
+| GET    | `/api/v1/search`             | `q` (min 2 chars), `sort=relevance` by default — PostgreSQL FTS (`websearch_to_tsquery` + `ts_rank`) with ILIKE fallback for partial words (M12)                    |
 
 Offset pagination: `meta.page`, `meta.limit`, `meta.total`, `meta.pageCount`.
 

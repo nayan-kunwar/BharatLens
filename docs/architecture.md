@@ -69,10 +69,13 @@ repeatable tick (every INGEST_POLL_MINUTES, 0 = off)
         │ fans out
         ▼
 ingest jobs ──▶ ingestFeed() ──▶ on new inserts, enqueues claims jobs
-                                        │
+                                        │                    │
+                                        │                    ▼
+                                        │          claims jobs ──▶ extractClaimsForEvent()
+                                        │          (LLM analysis is NEVER auto-chained)
                                         ▼
-                              claims jobs ──▶ extractClaimsForEvent()
-                                        (LLM analysis is NEVER auto-chained)
+                          candidate discovery (ADR-009): cluster unmatched
+                          coverage → gate (size/entity/India) → CANDIDATE events
 ```
 
 Key properties:

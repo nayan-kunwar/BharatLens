@@ -93,4 +93,28 @@ export const CHAIN_LIMITS = {
   MAX_EDGES: 30,
 } as const;
 
+/**
+ * Deterministic India-relevance gate for candidate-event discovery. A cluster
+ * of unmatched articles must contain at least one of these significant tokens
+ * before BharatLens creates a CANDIDATE event from it — the review queue stays
+ * focused without any model call. Extending this list is a product decision.
+ */
+export const INDIA_RELEVANCE_TOKENS = [
+  'india',
+  'indian',
+  'indians',
+  'bharat',
+  'delhi',
+  'mumbai',
+  'gujarat',
+  'kerala',
+  'punjab',
+  'rbi',
+  'rupee',
+  'isro',
+  'modi',
+  'jaishankar',
+  'mea',
+] as const;
+
 export const EXCERPT_MAX_LENGTH = 500;

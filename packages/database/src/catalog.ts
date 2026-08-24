@@ -24,7 +24,7 @@ import {
   nextStatusAfterTimelineUpdate,
   validateChainGraph,
 } from '@bharatlens/shared';
-import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, ne } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, sql } from 'drizzle-orm';
 import type { Database } from './client.js';
 import { analysisRuns, type AnalysisInputReferences } from './schema/analysis.js';
 import { articles } from './schema/articles.js';
@@ -779,6 +779,97 @@ export class EventCatalog {
       .select()
       .from(articles)
       .where(inArray(articles.status, ['INGESTED', 'NORMALIZED', 'LINKED']));
+  }
+
+  /** Canonical articles not attached to any event — the candidate-discovery input. */
+  async listUnmatchedCanonicalArticles(limit = 300) {
+    return this.db
+      .select({
+        id: articles.id,
+        sourceId: articles.sourceId,
+        title: articles.title,
+        summary: articles.summary,
+        publishedAt: articles.publishedAt,
+      })
+      .from(articles)
+      .where(
+        and(
+          inArray(articles.status, ['INGESTED', 'NORMALIZED']),
+          isNull(
+            this.db
+              .select({ one: sql`1` })
+              .from(eventArticles)
+              .where(eq(eventArticles.articleId, articles.id))
+              .limit(1),
+          ),
+        ),
+      )
+      .orderBy(desc(articles.publishedAt))
+      .limit(limit);
+  }
+
+  /** Title/summary of every non-archived event, for coverage-skip checks. */
+  async listNonArchivedEventTexts() {
+    return this.db
+      .select({
+        id: events.id,
+        slug: events.slug,
+        title: events.title,
+        summary: events.summary,
+        description: events.description,
+      })
+      .from(events)
+      .where(ne(events.status, 'ARCHIVED'));
+  }
+
+  /**
+   * Creates a CANDIDATE event from a discovered cluster and attaches all its
+   * members atomically (their status becomes LINKED, which also removes them
+   * from future discovery scans).
+   */
+  async createCandidateFromArticles(
+    draft: { title: string; slug: string; summary: string },
+    articleIds: string[],
+  ) {
+    if (articleIds.length === 0) {
+      throw new DomainError('VALIDATION_ERROR', 'Candidate needs at least one article');
+    }
+
+    const memberRows = await this.db
+      .select({ id: articles.id })
+      .from(articles)
+      .where(inArray(articles.id, articleIds));
+    if (memberRows.length !== articleIds.length) {
+      throw new DomainError('VALIDATION_ERROR', 'Some cluster articles no longer exist');
+    }
+
+    return this.db.transaction(async (tx) => {
+      const [event] = await tx
+        .insert(events)
+        .values({
+          title: draft.title,
+          slug: draft.slug,
+          summary: draft.summary,
+          status: 'CANDIDATE',
+        })
+        .returning();
+
+      if (!event) {
+        throw new DomainError('INTERNAL_ERROR', 'Failed to create candidate event');
+      }
+
+      await tx
+        .insert(eventArticles)
+        .values(articleIds.map((articleId) => ({ eventId: event.id, articleId })))
+        .onConflictDoNothing();
+
+      await tx
+        .update(articles)
+        .set({ status: 'LINKED', updatedAt: new Date() })
+        .where(inArray(articles.id, articleIds));
+
+      return event;
+    });
   }
 
   async addUpdate(input: {

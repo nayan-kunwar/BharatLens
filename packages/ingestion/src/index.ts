@@ -23,3 +23,12 @@ export { parseFeedXml } from './rss.js';
 export { RssAdapter } from './rss-adapter.js';
 export { extractClaimsForEvent, extractClaimsForEvents } from './claims.js';
 export type { ExtractClaimsResult } from './claims.js';
+export { discoverCandidates } from './discover-candidates.js';
+export type { DiscoveryResult } from './discover-candidates.js';
+export {
+  buildCandidateDraft,
+  clusterArticles,
+  evaluateCluster,
+  MIN_CLUSTER_SIZE,
+} from './candidates.js';
+export type { ArticleCluster, CandidateArticle, ClusterGateResult } from './candidates.js';

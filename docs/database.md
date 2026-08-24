@@ -63,3 +63,9 @@ There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 `pnpm db:seed` is idempotent by event slug and **additive for M4**: if the Hormuz example already exists from M3, a second published impact assessment and extra timeline rows are attached instead of skipping the event.
 
 Evidence strength is **computed** from linked sources, not an LLM percentage. Analysis confidence is a separate field on assessments.
+
+M12 search uses a stored generated tsvector (`events.search_vector`, english,
+weighted A=title B=summary C=description). Queries combine
+`websearch_to_tsquery` matching with the older ILIKE fallback for partial words;
+`sort=relevance` orders by `ts_rank`. Stay on PostgreSQL until measured otherwise
+(ADR discipline in AGENTS.md §37).

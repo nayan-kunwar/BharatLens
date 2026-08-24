@@ -18,13 +18,14 @@ export const eventListQuerySchema = paginationSchema.extend({
   country: z.string().length(2).optional(),
   topic: z.string().min(1).max(80).optional(),
   importance: z.enum(IMPORTANCE_LEVELS).optional(),
-  sort: z.enum(['occurredAt', 'publishedAt', 'updatedAt']).default('publishedAt'),
+  sort: z.enum(['occurredAt', 'publishedAt', 'updatedAt', 'relevance']).default('publishedAt'),
   order: z.enum(['asc', 'desc']).default('desc'),
 });
 
 export const searchQuerySchema = paginationSchema.extend({
   q: z.string().trim().min(2).max(200),
-  sort: z.enum(['occurredAt', 'publishedAt', 'updatedAt']).default('publishedAt'),
+  // Search results are relevance-ranked by default (M12 FTS).
+  sort: z.enum(['occurredAt', 'publishedAt', 'updatedAt', 'relevance']).default('relevance'),
   order: z.enum(['asc', 'desc']).default('desc'),
 });
 

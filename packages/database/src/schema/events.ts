@@ -10,6 +10,8 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { customType } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { articles } from './articles.js';
 import { impactChains } from './chains.js';
 import { countries } from './countries.js';
@@ -23,6 +25,13 @@ import {
   importanceLevelEnum,
 } from './enums.js';
 import { topics } from './topics.js';
+
+/** PostgreSQL tsvector column (M12 full-text search). */
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return 'tsvector';
+  },
+});
 
 export const events = pgTable(
   'events',
@@ -45,6 +54,9 @@ export const events = pgTable(
       (): AnyPgColumn => impactChains.id,
       { onDelete: 'set null' },
     ),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      sql`setweight(to_tsvector('english', coalesce(title, '')), 'A') || setweight(to_tsvector('english', coalesce(summary, '')), 'B') || setweight(to_tsvector('english', coalesce(description, '')), 'C')`,
+    ),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -55,6 +67,7 @@ export const events = pgTable(
     index('events_published_at_idx').on(table.publishedAt),
     index('events_current_impact_assessment_id_idx').on(table.currentImpactAssessmentId),
     index('events_current_impact_chain_id_idx').on(table.currentImpactChainId),
+    index('events_search_vector_idx').using('gin', table.searchVector),
   ],
 );
 

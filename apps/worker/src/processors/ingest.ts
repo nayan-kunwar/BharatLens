@@ -7,7 +7,8 @@ import {
   type ClaimsJobPayload,
   type IngestJobPayload,
 } from '@bharatlens/jobs';
-import { ingestFeed, resolveFeeds, type FeedConfig } from '@bharatlens/ingestion';
+import { ingestFeed } from '@bharatlens/ingestion';
+import { discoverCandidates, resolveFeeds, type FeedConfig } from '@bharatlens/ingestion';
 import type { Job, Processor } from 'bullmq';
 import type { JobsQueue } from '../types.js';
 
@@ -88,6 +89,23 @@ export function createIngestProcessor(deps: IngestProcessorDeps): Processor<Inge
         deps.logger.info(
           { jobType: 'ingest', jobId: job.id, feedSlug, claimsJobsQueued: slugs.length },
           'queued claims refresh after new articles',
+        );
+      }
+
+      // Deterministic candidate discovery over the new unmatched coverage.
+      // Failure here must not fail the ingest job — the next tick rescans.
+      try {
+        const discovery = await discoverCandidates({ catalog: deps.catalog });
+        if (discovery.candidatesCreated > 0 || discovery.skippedExistingEvent > 0) {
+          deps.logger.info(
+            { jobType: 'ingest', jobId: job.id, feedSlug, ...discovery },
+            'candidate discovery finished',
+          );
+        }
+      } catch (error) {
+        deps.logger.error(
+          { err: error, jobType: 'ingest', jobId: job.id, feedSlug },
+          'candidate discovery failed (ingest result unaffected)',
         );
       }
     }

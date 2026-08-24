@@ -16,7 +16,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const query = getOne(search.q)?.trim() ?? '';
   const pageValue = Number(getOne(search.page) ?? '1');
   const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
-  const result = query.length >= 2 ? await searchEvents(query, { page }).catch(() => null) : null;
+  const result =
+    query.length >= 2
+      ? await searchEvents(query, { page, sort: 'relevance' }).catch(() => null)
+      : null;
 
   return (
     <main className="page-shell page-content">

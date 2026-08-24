@@ -5,7 +5,7 @@ import {
   type EventStatus,
 } from '@bharatlens/shared';
 import { analysisRuns } from './schema/analysis.js';
-import { and, asc, count, desc, eq, ilike, inArray, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { Database } from './client.js';
 import { articles } from './schema/articles.js';
 import { impactChainEdges, impactChainNodes, impactChains } from './schema/chains.js';
@@ -24,8 +24,22 @@ import {
 import { sources } from './schema/sources.js';
 import { topics } from './schema/topics.js';
 
-export type EventSortField = 'occurredAt' | 'publishedAt' | 'updatedAt';
+export type EventSortField = 'occurredAt' | 'publishedAt' | 'updatedAt' | 'relevance';
 export type SortDirection = 'asc' | 'desc';
+
+/**
+ * Full-text match with an ILIKE fallback so partial words ("hormu") still
+ * resolve; ranked by ts_rank when the caller asks for relevance.
+ */
+function textMatchFilter(query: string): SQL {
+  const pattern = `%${query}%`;
+  const tsQuery = sql`websearch_to_tsquery('english', ${query})`;
+  return or(
+    sql`${events.searchVector} @@ ${tsQuery}`,
+    ilike(events.title, pattern),
+    ilike(events.summary, pattern),
+  )!;
+}
 
 export type ListEventsInput = {
   page: number;
@@ -57,17 +71,23 @@ export class EventQueries {
     }
 
     if (input.query) {
-      const pattern = `%${input.query}%`;
-      filters.push(or(ilike(events.title, pattern), ilike(events.summary, pattern))!);
+      filters.push(textMatchFilter(input.query));
     }
 
     const whereClause = and(...filters);
+    const useRelevance = input.sort === 'relevance' && Boolean(input.query);
     const sortColumn = {
       occurredAt: events.occurredAt,
       publishedAt: events.publishedAt,
       updatedAt: events.updatedAt,
-    }[input.sort];
-    const orderBy = input.order === 'asc' ? asc(sortColumn) : desc(sortColumn);
+    }[input.sort === 'relevance' ? 'publishedAt' : input.sort];
+    const orderBy = useRelevance
+      ? desc(
+          sql`ts_rank(${events.searchVector}, websearch_to_tsquery('english', ${input.query ?? ''}))`,
+        )
+      : input.order === 'asc'
+        ? asc(sortColumn)
+        : desc(sortColumn);
     const offset = (input.page - 1) * input.limit;
 
     let eventIdFilter: string[] | undefined;
@@ -334,8 +354,7 @@ export class EventQueries {
     }
 
     if (input.query) {
-      const pattern = `%${input.query}%`;
-      filters.push(or(ilike(events.title, pattern), ilike(events.summary, pattern))!);
+      filters.push(textMatchFilter(input.query));
     }
 
     const whereClause = filters.length > 0 ? and(...filters) : undefined;

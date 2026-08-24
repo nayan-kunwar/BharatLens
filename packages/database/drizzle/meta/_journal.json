@@ -43,6 +43,13 @@
       "when": 1787527200000,
       "tag": "0005_impact_chains",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787530800000,
+      "tag": "0006_search_vector",
+      "breakpoints": true
     }
   ]
 }

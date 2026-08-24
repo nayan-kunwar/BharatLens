@@ -83,6 +83,16 @@ Default feeds (small set, public RSS):
 
 Re-running the CLI is safe: unique `articles.url` makes it idempotent.
 
+## Candidate-event discovery (ADR-009)
+
+After an ingest inserts new articles, the worker scans unmatched canonical
+coverage and clusters it with the precision dedupe matcher inside a 48-hour
+window. Clusters that pass three gates — at least two articles, a shared
+gazetteer entity, and a deterministic India-relevance token — become CANDIDATE
+events with all members attached. Clusters already covered by an existing event
+are skipped (claims extraction attaches them instead). The step is fully
+deterministic: no model calls, no fabricated titles.
+
 ## Why not Elasticsearch
 
 Volume is tiny. Postgres unique constraints are the dedupe. Since M9, ingestion runs as a scheduled BullMQ job on the worker (`ADR-004-bullmq.md`), so it no longer needs a developer terminal; `pnpm ingest:rss` still works as a direct run.

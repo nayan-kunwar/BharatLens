@@ -145,7 +145,7 @@ export type EventListParams = {
   country?: string;
   topic?: string;
   importance?: ImportanceLevel;
-  sort?: 'occurredAt' | 'publishedAt' | 'updatedAt';
+  sort?: 'occurredAt' | 'publishedAt' | 'updatedAt' | 'relevance';
   order?: 'asc' | 'desc';
 };
 

@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
 import { DomainError, ErrorCode, ok } from '@bharatlens/shared';
 import type { EventCatalog, EventQueries } from '@bharatlens/database';
 import type { AnalysisJobPayload, IngestJobPayload } from '@bharatlens/jobs';
@@ -192,6 +193,15 @@ export const adminApiRoutes: FastifyPluginAsync<AdminRouteDeps> = async (app, op
     const params = parseWithSchema(uuidParamsSchema, request.params);
     const result = await catalog.publishChain(params.id);
     return ok(result);
+  });
+
+  app.get('/analytics/pipeline', async (request) => {
+    const query = parseWithSchema(
+      z.object({ days: z.coerce.number().int().min(7).max(365).default(30) }),
+      request.query,
+    );
+    const health = await queries.getPipelineHealth(query.days);
+    return ok({ windowDays: query.days, ...health });
   });
 
   app.post('/events/:id/analyze', async (request) => {

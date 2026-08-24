@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { Database } from '@bharatlens/database';
 import { EventQueries } from '@bharatlens/database';
+import { analyticsRoutes } from '../modules/analytics/routes.js';
 import { countryRoutes } from '../modules/countries/routes.js';
 import { eventRoutes } from '../modules/events/routes.js';
 import { mapRoutes } from '../modules/map/routes.js';
@@ -15,6 +16,7 @@ export const publicApi: FastifyPluginAsync<{ db: Database }> = async (app, opts)
       await v1.register(countryRoutes, { queries });
       await v1.register(topicRoutes, { queries });
       await v1.register(mapRoutes, { queries });
+      await v1.register(analyticsRoutes, { queries });
     },
     { prefix: '/api/v1' },
   );

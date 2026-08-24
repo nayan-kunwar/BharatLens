@@ -174,6 +174,19 @@ and the India↔Country panel are **derived** from published records via
 `GET /api/v1/map/overview`: shared-event counts and recent shared events only.
 No curated or subjective relationship data exists in the product.
 
+## M14 analytics
+
+`/analytics` (public) and the admin dashboard's pipeline section are **derived
+at read time** from published/audit tables — no counters, no averages of
+ordinal levels (ADR-011):
+
+- Category exposure grid over current published assessments
+- Weekly publication trend + version upgrade/downgrade transitions
+- Topic/country movers vs an equal-length prior window
+- Admin ingestion funnel + analysis-run outcomes (`GET /api/v1/admin/analytics/pipeline`)
+
+Windows default to 90 days and clamp to 7–365.
+
 ## Next
 
-M14 advanced analytics; M15 AI evaluation harness (fixture-based, after review).
+M15 AI evaluation harness (fixture-based, after review exists — it does).

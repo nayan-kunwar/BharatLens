@@ -114,6 +114,36 @@ export async function getMapOverview() {
   return response.data.partners;
 }
 
+export type AnalyticsOverview = {
+  windowDays: number;
+  categoryExposure: Array<{
+    category: string;
+    counts: { LOW: number; MEDIUM: number; HIGH: number; CRITICAL: number };
+  }>;
+  impactTrend: {
+    weeks: Array<{ week: string; newAssessments: number; highPlus: number }>;
+    transitions: { upgrades: number; downgrades: number };
+  };
+  topicTrend: Array<{
+    slug: string;
+    name: string;
+    currentCount: number;
+    priorCount: number;
+    delta: number;
+  }>;
+  countryMovers: Array<{
+    code: string;
+    name: string;
+    currentCount: number;
+    priorCount: number;
+    delta: number;
+  }>;
+};
+
+export async function getAnalyticsOverview(days = 90) {
+  return (await fetchApi<AnalyticsOverview>(`/api/v1/analytics/overview?days=${days}`)).data;
+}
+
 export type Claim = {
   id: string;
   statement: string;

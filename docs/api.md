@@ -39,6 +39,7 @@ Claims on the public API are `APPROVED` only.
 | GET    | `/api/v1/topics/:slug`       |                                                                                                                                                                     |
 | GET    | `/api/v1/search`             | `q` (min 2 chars), `sort=relevance` by default — PostgreSQL FTS (`websearch_to_tsquery` + `ts_rank`) with ILIKE fallback for partial words (M12)                    |
 | GET    | `/api/v1/map/overview`       | India-centered partners derived from published events: `{code, name, eventCount, lastSharedAt}` ordered by count desc (M13)                                         |
+| GET    | `/api/v1/analytics/overview` | `days` clamped 7–365 (default 90). Bundled derived analytics: category exposure, weekly impact trend + transitions, topic/country movers (M14)                      |
 
 Offset pagination: `meta.page`, `meta.limit`, `meta.total`, `meta.pageCount`.
 

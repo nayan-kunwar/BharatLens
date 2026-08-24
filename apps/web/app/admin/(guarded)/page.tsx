@@ -3,8 +3,24 @@ import { adminFetch, type AdminOverview } from '../../lib/admin-api';
 
 export const metadata = { title: 'Overview' };
 
+type PipelineHealth = {
+  windowDays: number;
+  funnel: Array<{
+    day: string;
+    seen: number;
+    inserted: number;
+    duplicates: number;
+    rejected: number;
+    failures: number;
+  }>;
+  analysis: Array<{ modelName: string; status: string; runs: number }>;
+};
+
 export default async function AdminDashboardPage() {
-  const overview = await adminFetch<AdminOverview>('/overview');
+  const [overview, pipeline] = await Promise.all([
+    adminFetch<AdminOverview>('/overview'),
+    adminFetch<PipelineHealth>('/analytics/pipeline?days=30').catch(() => null),
+  ]);
 
   return (
     <div className="page-shell">
@@ -46,6 +62,57 @@ export default async function AdminDashboardPage() {
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section className="admin-section">
+        <h2>Pipeline health (30 days)</h2>
+        {!pipeline ? (
+          <p className="empty-state">Pipeline analytics unavailable.</p>
+        ) : (
+          <>
+            {pipeline.funnel.length === 0 ? (
+              <p className="empty-state">No ingestion jobs ran in this window.</p>
+            ) : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Day</th>
+                    <th>Seen</th>
+                    <th>Inserted</th>
+                    <th>Duplicates</th>
+                    <th>Rejected</th>
+                    <th>Failed jobs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pipeline.funnel.map((row) => (
+                    <tr key={row.day}>
+                      <td>{row.day}</td>
+                      <td>{row.seen}</td>
+                      <td>{row.inserted}</td>
+                      <td>{row.duplicates}</td>
+                      <td>{row.rejected}</td>
+                      <td>{row.failures}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            <h3>Analysis runs by model</h3>
+            {pipeline.analysis.length === 0 ? (
+              <p className="empty-state">No analysis runs in this window.</p>
+            ) : (
+              <ul className="plain-list">
+                {pipeline.analysis.map((entry) => (
+                  <li key={`${entry.modelName}-${entry.status}`}>
+                    {entry.modelName} — {entry.status}: {entry.runs}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </section>
 
       <section className="admin-section">

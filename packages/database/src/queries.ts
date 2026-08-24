@@ -1,6 +1,7 @@
 import {
   DomainError,
   EVENT_STATUSES,
+  IMPACT_CATEGORIES,
   PUBLIC_EVENT_STATUSES,
   type EventStatus,
 } from '@bharatlens/shared';
@@ -13,8 +14,10 @@ import {
   countDistinct,
   desc,
   eq,
+  gte,
   ilike,
   inArray,
+  isNotNull,
   max,
   ne,
   or,
@@ -665,6 +668,230 @@ export class EventQueries {
       eventCount: Number(row.eventCount),
       lastSharedAt: iso(row.lastSharedAt),
     }));
+  }
+
+  // --- Analytics (M14) ---
+
+  /**
+   * Level distribution per category across the CURRENT published assessment
+   * of every public event. Ordinal levels are reported as counts, never
+   * averaged — an "average impact score" would invent precision.
+   */
+  async getCategoryExposure() {
+    const rows = await this.db
+      .select({
+        category: impactCategoryLevels.category,
+        level: impactCategoryLevels.level,
+        count: count(),
+      })
+      .from(impactCategoryLevels)
+      .innerJoin(impactAssessments, eq(impactAssessments.id, impactCategoryLevels.assessmentId))
+      .innerJoin(events, eq(events.currentImpactAssessmentId, impactAssessments.id))
+      .where(
+        and(
+          inArray(events.status, [...PUBLIC_EVENT_STATUSES]),
+          eq(impactAssessments.status, 'PUBLISHED'),
+        ),
+      )
+      .groupBy(impactCategoryLevels.category, impactCategoryLevels.level);
+
+    const byCategory = new Map<
+      string,
+      { LOW: number; MEDIUM: number; HIGH: number; CRITICAL: number }
+    >();
+    for (const row of rows) {
+      const entry = byCategory.get(row.category) ?? { LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 };
+      entry[row.level] += Number(row.count);
+      byCategory.set(row.category, entry);
+    }
+
+    return IMPACT_CATEGORIES.map((category) => ({
+      category,
+      counts: byCategory.get(category) ?? { LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 },
+    }));
+  }
+
+  /**
+   * Weekly publication trend for published assessments on public events, plus
+   * upgrade/downgrade counts between consecutive versions. PostgreSQL compares
+   * the level enum in declaration order (LOW < MEDIUM < HIGH < CRITICAL).
+   */
+  async getImpactTrend(days: number) {
+    const window = sql`make_interval(days => ${days})`;
+
+    const weekRows = await this.db
+      .select({
+        week: sql<string>`date_trunc('week', ${impactAssessments.publishedAt})`,
+        newAssessments: count(),
+        highPlus: sql<number>`count(*) filter (where ${impactAssessments.overallLevel} in ('HIGH','CRITICAL'))`,
+      })
+      .from(impactAssessments)
+      .innerJoin(
+        events,
+        and(
+          eq(events.id, impactAssessments.eventId),
+          inArray(events.status, [...PUBLIC_EVENT_STATUSES]),
+        ),
+      )
+      .where(
+        and(
+          eq(impactAssessments.status, 'PUBLISHED'),
+          isNotNull(impactAssessments.publishedAt),
+          gte(impactAssessments.publishedAt, sql`now() - ${window}`),
+        ),
+      )
+      .groupBy(sql`date_trunc('week', ${impactAssessments.publishedAt})`)
+      .orderBy(sql`date_trunc('week', ${impactAssessments.publishedAt})`);
+
+    const transitionRows = await this.db.execute<{ upgrades: string; downgrades: string }>(sql`
+      with ranked as (
+        select overall_level,
+               lag(overall_level) over (partition by event_id order by published_at) as previous_level
+        from impact_assessments
+        where status = 'PUBLISHED' and published_at is not null
+          and event_id in (select id from events where status in ('PUBLISHED','UPDATED'))
+          and published_at >= now() - make_interval(days => ${days})
+      )
+      select
+        count(*) filter (where previous_level < overall_level)::text as upgrades,
+        count(*) filter (where previous_level > overall_level)::text as downgrades
+      from ranked
+      where previous_level is not null
+    `);
+    const transitionRow = transitionRows[0];
+
+    return {
+      weeks: weekRows.map((row) => ({
+        week: new Date(row.week).toISOString().slice(0, 10),
+        newAssessments: Number(row.newAssessments),
+        highPlus: Number(row.highPlus),
+      })),
+      transitions: {
+        upgrades: Number(transitionRow?.upgrades ?? 0),
+        downgrades: Number(transitionRow?.downgrades ?? 0),
+      },
+    };
+  }
+
+  /** Events-per-topic inside the window vs the preceding window of equal length. */
+  async getTopicTrend(days: number) {
+    const rows = await this.db.execute<{
+      slug: string;
+      name: string;
+      current_count: string;
+      prior_count: string;
+    }>(sql`
+      with windowed as (
+        select t.slug, t.name, e.id,
+          case when e.published_at >= now() - make_interval(days => ${days}) then 'current' else 'prior' end as bucket
+        from event_topics et
+        join topics t on t.id = et.topic_id
+        join events e on e.id = et.event_id
+        where e.status in ('PUBLISHED','UPDATED') and e.published_at is not null
+          and e.published_at >= now() - make_interval(days => ${days * 2})
+          and e.published_at < now() - make_interval(days => 0)
+      )
+      select slug, name,
+        count(*) filter (where bucket = 'current')::text as current_count,
+        count(*) filter (where bucket = 'prior')::text as prior_count
+      from windowed group by slug, name
+    `);
+
+    return rows
+      .map((row) => ({
+        slug: row.slug,
+        name: row.name,
+        currentCount: Number(row.current_count),
+        priorCount: Number(row.prior_count),
+        delta: Number(row.current_count) - Number(row.prior_count),
+      }))
+      .sort((a, b) => b.delta - a.delta || b.currentCount - a.currentCount);
+  }
+
+  /** Same mover math as topics, per country (excluding India itself). */
+  async getCountryMovers(days: number) {
+    const rows = await this.db.execute<{
+      code: string;
+      name: string;
+      current_count: string;
+      prior_count: string;
+    }>(sql`
+      with windowed as (
+        select c.code, c.name, e.id,
+          case when e.published_at >= now() - make_interval(days => ${days}) then 'current' else 'prior' end as bucket
+        from event_countries ec
+        join countries c on c.id = ec.country_id and c.code <> 'IN'
+        join events e on e.id = ec.event_id
+        where e.status in ('PUBLISHED','UPDATED') and e.published_at is not null
+          and e.published_at >= now() - make_interval(days => ${days * 2})
+      )
+      select code, name,
+        count(*) filter (where bucket = 'current')::text as current_count,
+        count(*) filter (where bucket = 'prior')::text as prior_count
+      from windowed group by code, name
+    `);
+
+    return rows
+      .map((row) => ({
+        code: row.code,
+        name: row.name,
+        currentCount: Number(row.current_count),
+        priorCount: Number(row.prior_count),
+        delta: Number(row.current_count) - Number(row.prior_count),
+      }))
+      .sort((a, b) => b.delta - a.delta || b.currentCount - a.currentCount);
+  }
+
+  /**
+   * Admin pipeline health: daily ingestion funnel plus analysis-run outcomes.
+   * Derived from the existing audit tables; no counters of its own.
+   */
+  async getPipelineHealth(days: number) {
+    const funnelRows = await this.db.execute<{
+      day: string;
+      seen: number;
+      inserted: number;
+      duplicates: number;
+      rejected: number;
+      failures: number;
+    }>(sql`
+      select started_at::date::text as day,
+             coalesce(sum(items_seen), 0)::int as seen,
+             coalesce(sum(items_inserted), 0)::int as inserted,
+             coalesce(sum(items_duplicate), 0)::int as duplicates,
+             coalesce(sum(items_rejected), 0)::int as rejected,
+             count(*) filter (where status = 'FAILED')::int as failures
+      from ingestion_jobs
+      where started_at >= now() - make_interval(days => ${days})
+      group by 1 order by 1
+    `);
+
+    const analysisRows = await this.db.execute<{
+      model_name: string;
+      status: string;
+      runs: number;
+    }>(sql`
+      select model_name, status, count(*)::int as runs
+      from analysis_runs
+      where created_at >= now() - make_interval(days => ${days})
+      group by 1, 2 order by 1, 2
+    `);
+
+    return {
+      funnel: funnelRows.map((row) => ({
+        day: row.day,
+        seen: Number(row.seen),
+        inserted: Number(row.inserted),
+        duplicates: Number(row.duplicates),
+        rejected: Number(row.rejected),
+        failures: Number(row.failures),
+      })),
+      analysis: analysisRows.map((row) => ({
+        modelName: row.model_name,
+        status: row.status,
+        runs: Number(row.runs),
+      })),
+    };
   }
 
   private async hydrateList(rows: Array<typeof events.$inferSelect>) {

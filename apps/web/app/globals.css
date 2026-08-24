@@ -1372,3 +1372,134 @@ h3 {
   align-items: center;
   gap: 0.3rem;
 }
+
+/* Geopolitical map (M13) */
+
+.map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.world-map {
+  position: relative;
+}
+
+.world-map svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.world-map__sphere {
+  fill: #eaf1f8;
+  stroke: #c6d4e2;
+}
+
+.world-map__country {
+  fill: #d7dee6;
+  stroke: #f5f8fb;
+  stroke-width: 0.4;
+  cursor: default;
+}
+
+.world-map__fill--low {
+  fill: #cfe3d4;
+}
+.world-map__fill--mid {
+  fill: #9cc9ab;
+}
+.world-map__fill--high {
+  fill: #5da477;
+}
+.world-map__fill--max {
+  fill: #2e7d4f;
+}
+
+.world-map__india {
+  fill: #ff9933;
+  stroke: #fff;
+}
+
+.world-map__selected {
+  stroke: #1b4332;
+  stroke-width: 1.6;
+}
+
+.world-map__marker {
+  fill: #138808;
+  stroke: #fff;
+  stroke-width: 1;
+  cursor: pointer;
+}
+
+.world-map__marker--active {
+  fill: #0b4f0b;
+  r: 6;
+}
+
+.world-map__tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #10241a;
+  color: #fff;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.world-map__legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.world-map__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.world-map__swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.map-panel {
+  border: 1px solid var(--border, #ddd);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.map-panel__events {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.map-panel__events li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.map-panel__events time {
+  font-size: 0.78rem;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .map-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -166,6 +166,14 @@ events.current_impact_chain_id
 - The public event page renders the current chain as a top-down stepper,
   layered client-side from the graph — no per-event hardcoding.
 
+## M13 geopolitical map
+
+`/map` renders an India-centered orthographic globe from world-atlas TopoJSON
+(d3-geo + topojson-client, no wrapper library — ADR-010). Choropleth intensity
+and the India↔Country panel are **derived** from published records via
+`GET /api/v1/map/overview`: shared-event counts and recent shared events only.
+No curated or subjective relationship data exists in the product.
+
 ## Next
 
-Candidate-event auto-creation from unmatched ingested articles (own milestone), search tuning (M12), geopolitical map (M13).
+M14 advanced analytics; M15 AI evaluation harness (fixture-based, after review).

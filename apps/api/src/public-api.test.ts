@@ -251,4 +251,45 @@ describe.skipIf(!databaseUrl)('public API v1', () => {
     const response = await app.inject({ method: 'GET', url: '/api/v1/events?page=0' });
     expect(response.statusCode).toBe(400);
   });
+
+  it('returns the india map overview with shared partners only', async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const [india] = (
+      await pool.sql<[{ id: string }]>`select id from countries where code = 'IN' limit 1`
+    ).map((row) => row);
+    if (!india) {
+      return;
+    }
+    void india;
+    const partner = await catalog.createCountry({
+      code: testCountryCode(suffix),
+      name: `Map partner ${suffix}`,
+      slug: `map-api-${suffix}`,
+    });
+    const event = await catalog.createEvent({
+      title: `Map api fixture ${suffix}`,
+      slug: `map-api-${suffix}`,
+      summary: undefined,
+      countryIds: [partner.id],
+    });
+    // Attach India via junction directly (createEvent already linked partner).
+    await pool.sql`
+      insert into event_countries (event_id, country_id)
+      select ${event.id}, c.id from countries c where c.code = 'IN'
+      on conflict do nothing`;
+    await catalog.transitionEvent(event.id, 'DRAFT');
+    await catalog.transitionEvent(event.id, 'ANALYZED');
+    await catalog.transitionEvent(event.id, 'REVIEW_REQUIRED');
+    await catalog.transitionEvent(event.id, 'PUBLISHED');
+
+    const response = await app.inject({ method: 'GET', url: '/api/v1/map/overview' });
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body) as {
+      data: { partners: Array<{ name: string; eventCount: number }> };
+    };
+    expect(body.data.partners.some((p) => p.name === `Map partner ${suffix}`)).toBe(true);
+
+    await pool.sql`delete from events where slug = ${`map-api-${suffix}`}`;
+    await pool.sql`delete from countries where slug = ${`map-api-${suffix}`}`;
+  });
 });

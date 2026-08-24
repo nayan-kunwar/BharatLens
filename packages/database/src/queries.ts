@@ -5,7 +5,22 @@ import {
   type EventStatus,
 } from '@bharatlens/shared';
 import { analysisRuns } from './schema/analysis.js';
-import { and, asc, count, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
+import {
+  and,
+  asc,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  max,
+  ne,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import type { Database } from './client.js';
 import { articles } from './schema/articles.js';
 import { impactChainEdges, impactChainNodes, impactChains } from './schema/chains.js';
@@ -611,6 +626,45 @@ export class EventQueries {
       .limit(limit);
 
     return rows.map((row) => ({ ...row, createdAt: iso(row.createdAt) }));
+  }
+
+  /**
+   * India-centered partner overview for the M13 map: every country sharing at
+   * least one PUBLISHED/UPDATED event with India, with plain counts and the
+   * latest shared timestamp. Derived from published records only — no curated
+   * or subjective relationship data exists.
+   */
+  async getIndiaMapOverview() {
+    const india = alias(countries, 'india');
+    const partner = alias(countries, 'partner');
+    const ecIndia = alias(eventCountries, 'ec_india');
+    const ecPartner = alias(eventCountries, 'ec_partner');
+
+    const rows = await this.db
+      .select({
+        code: partner.code,
+        name: partner.name,
+        eventCount: countDistinct(ecIndia.eventId),
+        lastSharedAt: max(events.updatedAt),
+      })
+      .from(ecIndia)
+      .innerJoin(india, eq(india.id, ecIndia.countryId))
+      .innerJoin(
+        ecPartner,
+        and(eq(ecPartner.eventId, ecIndia.eventId), ne(ecPartner.countryId, ecIndia.countryId)),
+      )
+      .innerJoin(partner, eq(partner.id, ecPartner.countryId))
+      .innerJoin(events, eq(events.id, ecIndia.eventId))
+      .where(and(eq(india.code, 'IN'), inArray(events.status, [...PUBLIC_EVENT_STATUSES])))
+      .groupBy(partner.code, partner.name)
+      .orderBy(desc(countDistinct(ecIndia.eventId)));
+
+    return rows.map((row) => ({
+      code: row.code,
+      name: row.name,
+      eventCount: Number(row.eventCount),
+      lastSharedAt: iso(row.lastSharedAt),
+    }));
   }
 
   private async hydrateList(rows: Array<typeof events.$inferSelect>) {

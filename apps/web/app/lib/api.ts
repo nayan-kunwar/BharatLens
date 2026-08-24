@@ -102,6 +102,18 @@ export type EventChain = {
   history: EventChainSnapshot[];
 };
 
+export type MapPartner = {
+  code: string;
+  name: string;
+  eventCount: number;
+  lastSharedAt: string | null;
+};
+
+export async function getMapOverview() {
+  const response = await fetchApi<{ partners: MapPartner[] }>('/api/v1/map/overview');
+  return response.data.partners;
+}
+
 export type Claim = {
   id: string;
   statement: string;

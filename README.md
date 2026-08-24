@@ -4,7 +4,7 @@
 
 BharatLens turns global geopolitical events into source-backed explanations of what they mean for India. **India Impact** is a feature inside BharatLens, not a second product name.
 
-This repository is at **M12 — Search + Auto-Candidates**. The worker ingests RSS feeds on a schedule, refreshes claims, auto-groups unmatched coverage into CANDIDATE events (deterministic, reviewed before publication), and runs schema-validated LLM analysis on demand. Operators review everything in `/admin`; public search is PostgreSQL full-text with relevance ranking.
+This repository is at **M13 — Geopolitical Map**. The `/map` page shows an India-centered globe whose shading derives from published events (shared-event counts); clicking a partner lists their shared published events. The worker ingests RSS feeds on a schedule, refreshes claims, auto-groups unmatched coverage into CANDIDATE events (deterministic, reviewed before publication), and runs schema-validated LLM analysis on demand. Operators review everything in `/admin`; public search is PostgreSQL full-text with relevance ranking.
 
 ## What runs
 

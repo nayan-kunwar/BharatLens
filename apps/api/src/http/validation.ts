@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { DomainError, IMPORTANCE_LEVELS } from '@bharatlens/shared';
+import {
+  DomainError,
+  IMPORTANCE_LEVELS,
+  IMPACT_CATEGORIES,
+  IMPACT_LEVELS,
+  ANALYSIS_CONFIDENCE_LEVELS,
+  EVENT_STATUSES,
+} from '@bharatlens/shared';
 
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -31,6 +38,71 @@ export const codeParamsSchema = z.object({
 export const uuidParamsSchema = z.object({
   id: z.string().uuid(),
 });
+
+// --- Admin ---
+
+export const loginBodySchema = z.object({
+  password: z.string().min(1).max(200),
+});
+
+export const adminEventListQuerySchema = paginationSchema.extend({
+  status: z.enum(EVENT_STATUSES).optional(),
+  q: z.string().trim().max(200).optional(),
+});
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+
+export const adminCreateEventSchema = z.object({
+  title: z.string().min(3).max(250),
+  slug: z
+    .string()
+    .min(3)
+    .max(140)
+    .regex(/^[a-z0-9-]+$/, 'slug must be lowercase kebab-case')
+    .optional(),
+  summary: z.string().max(600).optional(),
+  description: z.string().max(8000).optional(),
+  importance: z.enum(IMPORTANCE_LEVELS).optional(),
+  eventType: z.string().min(2).max(80).optional(),
+  occurredAt: z.coerce.date().optional(),
+  countryCodes: z.array(z.string().length(2)).max(10).default([]),
+  topicSlugs: z.array(z.string().min(1).max(80)).max(10).default([]),
+});
+
+export const adminUpdateEventSchema = adminCreateEventSchema
+  .omit({ slug: true, countryCodes: true, topicSlugs: true })
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, 'At least one field is required');
+
+export const claimReviewBodySchema = z.object({
+  status: z.enum(['APPROVED', 'REJECTED']),
+});
+
+export const categoryLevelSchema = z.object({
+  category: z.enum(IMPACT_CATEGORIES),
+  level: z.enum(IMPACT_LEVELS),
+  reasoning: z.string().min(1).max(1000),
+});
+
+export const draftAssessmentPatchSchema = z
+  .object({
+    overallLevel: z.enum(IMPACT_LEVELS).optional(),
+    reasoning: z.string().min(1).max(4000).optional(),
+    analysisConfidence: z.enum(ANALYSIS_CONFIDENCE_LEVELS).optional(),
+    categories: z.array(categoryLevelSchema).min(1).max(20).optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, 'At least one field is required');
+
+export const analysisRunReviewBodySchema = z.object({
+  reviewedBy: z.string().min(1).max(120).default('admin'),
+});
+
+export { slugify };
 
 export function parseWithSchema<T>(schema: z.ZodType<T>, value: unknown): T {
   const parsed = schema.safeParse(value);

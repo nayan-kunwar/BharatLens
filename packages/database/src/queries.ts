@@ -1,4 +1,10 @@
-import { DomainError, PUBLIC_EVENT_STATUSES } from '@bharatlens/shared';
+import {
+  DomainError,
+  EVENT_STATUSES,
+  PUBLIC_EVENT_STATUSES,
+  type EventStatus,
+} from '@bharatlens/shared';
+import { analysisRuns } from './schema/analysis.js';
 import { and, asc, count, desc, eq, ilike, inArray, or, type SQL } from 'drizzle-orm';
 import type { Database } from './client.js';
 import { articles } from './schema/articles.js';
@@ -175,7 +181,10 @@ export class EventQueries {
 
   async listEventSources(eventId: string) {
     await this.requirePublicEventById(eventId);
+    return this.loadEventSourceRows(eventId);
+  }
 
+  private async loadEventSourceRows(eventId: string) {
     const rows = await this.db
       .select({
         id: sources.id,
@@ -304,6 +313,174 @@ export class EventQueries {
       body: row.body,
       impactChange: row.impactChange,
     }));
+  }
+
+  /**
+   * Admin listing: every status, optional status filter and text search, plus
+   * per-status counts so the review dashboard can render queue badges in one
+   * round trip.
+   */
+  async listAdminEvents(input: {
+    status?: EventStatus;
+    page: number;
+    limit: number;
+    query?: string;
+  }) {
+    const filters = [];
+
+    if (input.status) {
+      filters.push(eq(events.status, input.status));
+    }
+
+    if (input.query) {
+      const pattern = `%${input.query}%`;
+      filters.push(or(ilike(events.title, pattern), ilike(events.summary, pattern))!);
+    }
+
+    const whereClause = filters.length > 0 ? and(...filters) : undefined;
+    const offset = (input.page - 1) * input.limit;
+
+    const [rows, [totalRow], countRows] = await Promise.all([
+      this.db
+        .select()
+        .from(events)
+        .where(whereClause)
+        .orderBy(desc(events.updatedAt))
+        .limit(input.limit)
+        .offset(offset),
+      this.db.select({ value: count() }).from(events).where(whereClause),
+      this.db.select({ status: events.status, value: count() }).from(events).groupBy(events.status),
+    ]);
+
+    const items = await this.hydrateList(rows);
+
+    const countsByStatus = Object.fromEntries(EVENT_STATUSES.map((status) => [status, 0]));
+    for (const row of countRows) {
+      countsByStatus[row.status] = Number(row.value);
+    }
+
+    return { items, total: Number(totalRow?.value ?? 0), countsByStatus };
+  }
+
+  /** Full admin detail: drafts, pending claims, runs — everything review needs. */
+  async getAdminEventDetail(slug: string) {
+    const [event] = await this.db.select().from(events).where(eq(events.slug, slug)).limit(1);
+    if (!event) {
+      throw new DomainError('EVENT_NOT_FOUND', 'Event not found');
+    }
+
+    const base = await this.hydrateDetail(event);
+
+    const [claimRows, assessmentRows, runRows, sourceRows] = await Promise.all([
+      this.db
+        .select()
+        .from(claims)
+        .where(eq(claims.eventId, event.id))
+        .orderBy(asc(claims.createdAt)),
+      this.db
+        .select()
+        .from(impactAssessments)
+        .where(eq(impactAssessments.eventId, event.id))
+        .orderBy(asc(impactAssessments.version)),
+      this.db
+        .select()
+        .from(analysisRuns)
+        .where(eq(analysisRuns.eventId, event.id))
+        .orderBy(desc(analysisRuns.createdAt))
+        .limit(20),
+      this.loadEventSourceRows(event.id),
+    ]);
+
+    const claimIds = claimRows.map((row) => row.id);
+    const assessmentIds = assessmentRows.map((row) => row.id);
+
+    const [evidenceRows, categoryRows] = await Promise.all([
+      claimIds.length === 0
+        ? Promise.resolve([])
+        : this.db.select().from(evidence).where(inArray(evidence.claimId, claimIds)),
+      assessmentIds.length === 0
+        ? Promise.resolve([])
+        : this.db
+            .select()
+            .from(impactCategoryLevels)
+            .where(inArray(impactCategoryLevels.assessmentId, assessmentIds)),
+    ]);
+
+    return {
+      ...base,
+      sources: sourceRows,
+      claims: claimRows.map((claim) => ({
+        id: claim.id,
+        statement: claim.statement,
+        type: claim.type,
+        status: claim.status,
+        evidenceStrength: claim.evidenceStrength,
+        sourceCount: claim.sourceCount,
+        independentSourceCount: claim.independentSourceCount,
+        officialSourceCount: claim.officialSourceCount,
+        evidenceReason: claim.evidenceReason,
+        evidence: evidenceRows
+          .filter((item) => item.claimId === claim.id)
+          .map((item) => ({
+            id: item.id,
+            url: item.url,
+            excerpt: item.excerpt,
+            publishedAt: iso(item.publishedAt),
+          })),
+      })),
+      assessments: assessmentRows.map((assessment) => ({
+        id: assessment.id,
+        version: assessment.version,
+        status: assessment.status,
+        overallLevel: assessment.overallLevel,
+        reasoning: assessment.reasoning,
+        evidenceStrength: assessment.evidenceStrength,
+        analysisConfidence: assessment.analysisConfidence,
+        modelName: assessment.modelName,
+        promptVersion: assessment.promptVersion,
+        publishedAt: iso(assessment.publishedAt),
+        createdAt: iso(assessment.createdAt),
+        categories: categoryRows
+          .filter((category) => category.assessmentId === assessment.id)
+          .map((category) => ({
+            category: category.category,
+            level: category.level,
+            reasoning: category.reasoning,
+          })),
+      })),
+      analysisRuns: runRows.map((run) => ({
+        id: run.id,
+        status: run.status,
+        modelName: run.modelName,
+        promptVersion: run.promptVersion,
+        errorMessage: run.errorMessage,
+        generatedAt: iso(run.generatedAt),
+        reviewedAt: iso(run.reviewedAt),
+        reviewedBy: run.reviewedBy,
+        createdAt: iso(run.createdAt),
+      })),
+    };
+  }
+
+  async listRecentAnalysisRuns(limit = 10) {
+    const rows = await this.db
+      .select({
+        id: analysisRuns.id,
+        eventId: analysisRuns.eventId,
+        eventSlug: events.slug,
+        eventTitle: events.title,
+        status: analysisRuns.status,
+        modelName: analysisRuns.modelName,
+        promptVersion: analysisRuns.promptVersion,
+        errorMessage: analysisRuns.errorMessage,
+        createdAt: analysisRuns.createdAt,
+      })
+      .from(analysisRuns)
+      .innerJoin(events, eq(events.id, analysisRuns.eventId))
+      .orderBy(desc(analysisRuns.createdAt))
+      .limit(limit);
+
+    return rows.map((row) => ({ ...row, createdAt: iso(row.createdAt) }));
   }
 
   private async hydrateList(rows: Array<typeof events.$inferSelect>) {

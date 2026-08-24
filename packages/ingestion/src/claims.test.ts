@@ -7,6 +7,7 @@ import {
   type DatabasePool,
 } from '@bharatlens/database';
 import { extractClaimsForEvent } from './claims.js';
+import { deleteFixtureData } from './test-support.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -20,6 +21,10 @@ describe.skipIf(!databaseUrl)('claim extraction (postgres)', () => {
   });
 
   afterAll(async () => {
+    await deleteFixtureData(pool, {
+      sourceSlugPrefixes: ['fixture-agency-', 'fixture-un-'],
+      eventSlugPrefixes: ['claims-hormuz-'],
+    });
     await closeDatabase(pool.sql);
   });
 
@@ -27,12 +32,14 @@ describe.skipIf(!databaseUrl)('claim extraction (postgres)', () => {
     const suffix = randomUUID().slice(0, 8);
     const agency = await catalog.createSource({
       name: `Agency ${suffix}`,
-      slug: `agency-${suffix}`,
+      // Namespaced under fixture- so cross-package cleanup patterns never
+      // match another suite's sources.
+      slug: `fixture-agency-${suffix}`,
       type: 'NEWS_AGENCY',
     });
     const official = await catalog.createSource({
       name: `UN ${suffix}`,
-      slug: `un-${suffix}`,
+      slug: `fixture-un-${suffix}`,
       type: 'INTERNATIONAL_ORG',
     });
     const event = await catalog.createEvent({

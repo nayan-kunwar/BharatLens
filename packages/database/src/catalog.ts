@@ -20,7 +20,7 @@ import {
   isOfficialSourceType,
   nextStatusAfterTimelineUpdate,
 } from '@bharatlens/shared';
-import { and, desc, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, ne } from 'drizzle-orm';
 import type { Database } from './client.js';
 import { analysisRuns, type AnalysisInputReferences } from './schema/analysis.js';
 import { articles } from './schema/articles.js';
@@ -481,6 +481,273 @@ export class EventCatalog {
       .where(inArray(events.status, [...PUBLIC_EVENT_STATUSES]));
   }
 
+  /**
+   * Slugs of every non-archived event. Used by the claims worker to refresh
+   * coverage after new articles are ingested; archived events are excluded
+   * because they are no longer part of the active editorial loop.
+   */
+  async listActiveEventSlugs() {
+    const rows = await this.db
+      .select({ slug: events.slug })
+      .from(events)
+      .where(ne(events.status, 'ARCHIVED'));
+    return rows.map((row) => row.slug);
+  }
+
+  /**
+   * Idempotency guard for analysis jobs: an existing DRAFT assessment from the
+   * same prompt version means a previous run already produced (or is
+   * producing) output, and re-running the model would only create a duplicate
+   * draft version.
+   */
+  async findDraftImpactAssessment(eventId: string, promptVersion?: string) {
+    const [row] = await this.db
+      .select()
+      .from(impactAssessments)
+      .where(
+        and(
+          eq(impactAssessments.eventId, eventId),
+          eq(impactAssessments.status, 'DRAFT'),
+          ...(promptVersion ? [eq(impactAssessments.promptVersion, promptVersion)] : []),
+        ),
+      )
+      .orderBy(desc(impactAssessments.createdAt))
+      .limit(1);
+    return row ?? null;
+  }
+
+  async updateEventFields(
+    eventId: string,
+    patch: {
+      title?: string;
+      summary?: string;
+      description?: string;
+      importance?: ImportanceLevel;
+      eventType?: string;
+    },
+  ) {
+    const updates = Object.fromEntries(
+      Object.entries(patch).filter(([, value]) => value !== undefined),
+    );
+    if (Object.keys(updates).length === 0) {
+      return this.requireEvent(eventId);
+    }
+
+    const [row] = await this.db
+      .update(events)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(events.id, eventId))
+      .returning();
+
+    if (!row) {
+      throw new DomainError('EVENT_NOT_FOUND', 'Event not found');
+    }
+
+    return row;
+  }
+
+  /** Review decision for a claim. Only terminal decisions live here; creation stays with the pipelines. */
+  async setClaimStatus(claimId: string, status: Extract<ClaimStatus, 'APPROVED' | 'REJECTED'>) {
+    const [row] = await this.db
+      .update(claims)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(claims.id, claimId))
+      .returning();
+
+    if (!row) {
+      throw new DomainError('CLAIM_NOT_FOUND', 'Claim not found');
+    }
+
+    return row;
+  }
+
+  /**
+   * Edits a DRAFT assessment before publication. Published versions are
+   * immutable history; corrections go through a new version instead.
+   */
+  async updateDraftAssessment(
+    assessmentId: string,
+    patch: {
+      overallLevel?: ImpactLevel;
+      reasoning?: string;
+      analysisConfidence?: AnalysisConfidence;
+      categories?: Array<{ category: ImpactCategory; level: ImpactLevel; reasoning: string }>;
+    },
+  ) {
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(impactAssessments)
+        .where(eq(impactAssessments.id, assessmentId))
+        .limit(1);
+
+      if (!existing) {
+        throw new DomainError('ASSESSMENT_NOT_FOUND', 'Assessment not found');
+      }
+      if (existing.status !== 'DRAFT') {
+        throw new DomainError(
+          'INVALID_EVENT_STATUS',
+          `Only DRAFT assessments can be edited (assessment is ${existing.status})`,
+        );
+      }
+
+      const [updated] = await tx
+        .update(impactAssessments)
+        .set({
+          overallLevel: patch.overallLevel ?? existing.overallLevel,
+          reasoning: patch.reasoning ?? existing.reasoning,
+          analysisConfidence: patch.analysisConfidence ?? existing.analysisConfidence,
+        })
+        .where(eq(impactAssessments.id, assessmentId))
+        .returning();
+
+      if (patch.categories) {
+        if (patch.categories.length === 0) {
+          throw new DomainError(
+            'VALIDATION_ERROR',
+            'An assessment needs at least one impact category',
+          );
+        }
+        await tx
+          .delete(impactCategoryLevels)
+          .where(eq(impactCategoryLevels.assessmentId, assessmentId));
+        await tx.insert(impactCategoryLevels).values(
+          patch.categories.map((category) => ({
+            assessmentId,
+            category: category.category,
+            level: category.level,
+            reasoning: category.reasoning,
+          })),
+        );
+      }
+
+      const categoryRows = await tx
+        .select()
+        .from(impactCategoryLevels)
+        .where(eq(impactCategoryLevels.assessmentId, assessmentId));
+
+      return {
+        ...updated!,
+        categories: categoryRows.map((category) => ({
+          category: category.category,
+          level: category.level,
+          reasoning: category.reasoning,
+        })),
+      };
+    });
+  }
+
+  /**
+   * Publishes a DRAFT assessment atomically:
+   * assessment -> PUBLISHED (+publishedAt), event walks its lifecycle to a
+   * public state, and current_impact_assessment_id points at the new version.
+   * Already-public events keep their status (UPDATED stays UPDATED) and only
+   * receive the pointer swap plus a fresh version.
+   */
+  async publishAssessment(assessmentId: string, options: { reviewedBy?: string } = {}) {
+    const [existing] = await this.db
+      .select()
+      .from(impactAssessments)
+      .where(eq(impactAssessments.id, assessmentId))
+      .limit(1);
+
+    if (!existing) {
+      throw new DomainError('ASSESSMENT_NOT_FOUND', 'Assessment not found');
+    }
+    if (existing.status !== 'DRAFT') {
+      throw new DomainError(
+        'INVALID_EVENT_STATUS',
+        `Only DRAFT assessments can be published (assessment is ${existing.status})`,
+      );
+    }
+
+    const categoryRows = await this.db
+      .select()
+      .from(impactCategoryLevels)
+      .where(eq(impactCategoryLevels.assessmentId, assessmentId));
+    if (categoryRows.length === 0) {
+      throw new DomainError(
+        'INSUFFICIENT_EVIDENCE',
+        'Refusing to publish an assessment without any impact categories',
+      );
+    }
+
+    // Validate the lifecycle path BEFORE opening the transaction so an illegal
+    // jump fails without side effects.
+    const event = await this.requireEvent(existing.eventId);
+    const prePublic: EventStatus[] = ['CANDIDATE', 'DRAFT', 'ANALYZED', 'REVIEW_REQUIRED'];
+    const startIndex = prePublic.indexOf(event.status);
+    const path = startIndex >= 0 ? [...prePublic.slice(startIndex), 'PUBLISHED' as const] : [];
+
+    let cursor = event.status;
+    for (const next of path) {
+      assertEventStatusTransition(cursor, next);
+      cursor = next;
+    }
+
+    return this.db.transaction(async (tx) => {
+      const now = new Date();
+      const [assessment] = await tx
+        .update(impactAssessments)
+        .set({
+          status: 'PUBLISHED',
+          publishedAt: now,
+        })
+        .where(eq(impactAssessments.id, assessmentId))
+        .returning();
+
+      const [updatedEvent] = await tx
+        .update(events)
+        .set({
+          status: cursor,
+          currentImpactAssessmentId: assessmentId,
+          publishedAt: event.publishedAt ?? (cursor === 'PUBLISHED' ? now : undefined),
+          updatedAt: now,
+        })
+        .where(eq(events.id, existing.eventId))
+        .returning();
+
+      if (options.reviewedBy) {
+        const [latestRun] = await tx
+          .select({ id: analysisRuns.id })
+          .from(analysisRuns)
+          .where(and(eq(analysisRuns.eventId, existing.eventId), isNull(analysisRuns.reviewedAt)))
+          .orderBy(desc(analysisRuns.createdAt))
+          .limit(1);
+
+        if (latestRun) {
+          await tx
+            .update(analysisRuns)
+            .set({ reviewedAt: now, reviewedBy: options.reviewedBy })
+            .where(eq(analysisRuns.id, latestRun.id));
+        }
+      }
+
+      return { assessment: assessment!, event: updatedEvent! };
+    });
+  }
+
+  /** Records who reviewed an analysis run and when. Outcome is implicit: publish or not. */
+  async reviewAnalysisRun(runId: string, reviewedBy: string) {
+    const [row] = await this.db
+      .select()
+      .from(analysisRuns)
+      .where(eq(analysisRuns.id, runId))
+      .limit(1);
+
+    if (!row) {
+      throw new DomainError('ANALYSIS_RUN_NOT_FOUND', 'Analysis run not found');
+    }
+
+    const [updated] = await this.db
+      .update(analysisRuns)
+      .set({ reviewedAt: new Date(), reviewedBy })
+      .where(eq(analysisRuns.id, runId))
+      .returning();
+
+    return updated!;
+  }
+
   async listClaimsForEvent(eventId: string) {
     return this.db.select().from(claims).where(eq(claims.eventId, eventId));
   }
@@ -743,7 +1010,7 @@ export class EventCatalog {
     return updated ?? event;
   }
 
-  private async requireEvent(eventId: string) {
+  async requireEvent(eventId: string) {
     const [event] = await this.db.select().from(events).where(eq(events.id, eventId)).limit(1);
     if (!event) {
       throw new DomainError('EVENT_NOT_FOUND', 'Event not found');

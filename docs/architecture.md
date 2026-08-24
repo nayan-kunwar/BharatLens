@@ -1,6 +1,6 @@
 # Architecture
 
-BharatLens is a **modular monolith**: one API process, one idle worker process, one Next.js frontend, PostgreSQL as the source of truth, Redis present but unused for product logic until there is a real need.
+BharatLens is a **modular monolith**: one API process, one worker process, one Next.js frontend, PostgreSQL as the source of truth, Redis for queues.
 
 ```text
 Next.js (apps/web)
@@ -17,8 +17,15 @@ Fastify API (apps/api, host port 3101 in Compose)
 
 Worker (apps/worker)
         │
-        ├── GET /health   idle liveness
-        └── heartbeat     ping Postgres + Redis every 30s
+        ├── GET /health    liveness + queue names
+        ├── GET /ready     Postgres + Redis checks
+        ├── GET /queues    per-queue depth (waiting/active/completed/failed)
+        ├── ingest worker  scheduled RSS polling + feed ingestion
+        ├── claims worker  coverage matching + evidence linking
+        └── analysis worker  LLM pipeline (deterministic stub without API key)
+        │
+        ▼
+Redis (BullMQ: bharatlens:ingest / claims / analysis)
 ```
 
 There are **no write/admin routes** yet (M10). Public GETs are implemented and consumed by the Next.js M3 interface.
@@ -49,9 +56,32 @@ The homepage splits High India Impact from recently updated events, and lists to
 
 Hand-authored published examples are loaded with `pnpm db:seed` so the public UI is not empty. Seed claims are labeled ANALYSIS / SCENARIO / UNKNOWN and do not invent news article URLs.
 
-## Why an idle worker exists now
+## Why an idle worker existed before M9
 
-Compose should look like production: API and worker are separate processes. The worker proves it can start, log, and reach Redis and PostgreSQL. It does **not** enqueue or process jobs. BullMQ processors are M9.
+Compose should look like production: API and worker are separate processes. From M0–M8 the worker only proved it could start, log, and reach Redis and PostgreSQL; ingest and analysis ran through CLIs.
+
+## M9 background processing
+
+The worker now runs real BullMQ processors (see `ADR-004-bullmq.md` for the full decision record):
+
+```text
+repeatable tick (every INGEST_POLL_MINUTES, 0 = off)
+        │ fans out
+        ▼
+ingest jobs ──▶ ingestFeed() ──▶ on new inserts, enqueues claims jobs
+                                        │
+                                        ▼
+                              claims jobs ──▶ extractClaimsForEvent()
+                                        (LLM analysis is NEVER auto-chained)
+```
+
+Key properties:
+
+- **Payloads are slugs**; processors reload state from PostgreSQL so retries act on current data.
+- **Idempotency is layered**: article-level dedupe (ingest), unique constraints (claims), deterministic per-day job ids + a DRAFT-assessment guard (analysis).
+- **Retries**: 5 attempts, exponential backoff from 5 s; failures retained 7 days in Redis and logged with job type, id, and attempt.
+- **Lock durations** exceed worst-case processing (120 s for analysis) so stalled-job detection cannot double-run an LLM call.
+- If Redis is down: public reads keep working from PostgreSQL; background work pauses until Redis returns.
 
 ## Why Redis exists now
 
@@ -96,6 +126,25 @@ Deterministic extraction (`pnpm claims:extract`) attaches RSS articles that shar
 
 `pnpm analyze:event -- --event=<slug>` loads event metadata, calls a model (or a deterministic stub), validates JSON with Zod, and stores an `analysis_runs` row plus a **DRAFT** impact assessment. `evidence_strength` is still computed from linked evidence. `analysis_confidence` is an estimate. Public GET does not invoke a model.
 
+## M10 admin + human review
+
+The console (`/admin` in the web app) talks to a cookie-guarded `/api/v1/admin/*`
+surface (see `ADR-007-admin-auth.md`). The review loop is:
+
+```text
+CANDIDATE / REVIEW_REQUIRED event
+        │ review workspace (/admin/events/[slug])
+        ├── inspect claims + evidence → APPROVED / REJECTED (public sees APPROVED only)
+        ├── run AI analysis (enqueues; worker executes)
+        ├── edit DRAFT assessment (levels, reasoning, categories)
+        └── publish  ──▶ transaction: PUBLISHED assessment
+                          + lifecycle walk to public status
+                          + current_impact_assessment_id swap
+```
+
+Published versions are immutable; corrections create and publish new versions.
+The API refuses to boot without `ADMIN_PASSWORD`.
+
 ## Next
 
-M9 is real BullMQ (move ingest/analysis off the CLI). M10 is human review of `REVIEW_REQUIRED` events.
+Candidate-event auto-creation from unmatched ingested articles (its own milestone), then impact chains (M11).

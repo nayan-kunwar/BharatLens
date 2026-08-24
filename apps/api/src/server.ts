@@ -16,6 +16,7 @@ async function main(): Promise<void> {
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'shutting down api');
     await app.close();
+    await Promise.all(deps.queues.map((queue) => queue.close()));
     await closeHealthDeps(deps);
     process.exit(0);
   };

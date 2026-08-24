@@ -83,9 +83,9 @@ Default feeds (small set, public RSS):
 
 Re-running the CLI is safe: unique `articles.url` makes it idempotent.
 
-## Why not Elasticsearch / a queue yet
+## Why not Elasticsearch
 
-Volume is tiny. Postgres unique constraints are the dedupe. BullMQ is M9, when ingest should not block a developer terminal.
+Volume is tiny. Postgres unique constraints are the dedupe. Since M9, ingestion runs as a scheduled BullMQ job on the worker (`ADR-004-bullmq.md`), so it no longer needs a developer terminal; `pnpm ingest:rss` still works as a direct run.
 
 ## Failure modes
 

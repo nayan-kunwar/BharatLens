@@ -21,7 +21,7 @@ analysis_runs row + DRAFT impact assessment
 Human review (M10) → publish
 ```
 
-Public GET handlers do **not** call a model. There is **no BullMQ** yet (M9). There is **no evaluation harness** (M15).
+Public GET handlers do **not** call a model. Since M9 analysis runs as a BullMQ job (`pnpm queue analyze --event=<slug> [--force]`) with a per-day duplicate guard and a DRAFT-assessment guard; the CLI still works as a direct run. There is **no evaluation harness** (M15).
 
 ## What is stored
 

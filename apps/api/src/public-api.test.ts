@@ -110,6 +110,12 @@ describe.skipIf(!databaseUrl)('public API v1', () => {
   });
 
   afterAll(async () => {
+    // Fixture slugs are namespaced so cleanup can never match other suites.
+    await pool.sql`delete from events where slug like ${'hormuz-api-%'} or slug like ${'draft-%'}`;
+    await pool.sql`delete from articles where source_id in (select id from sources where slug like ${'ap-%'})`;
+    await pool.sql`delete from sources where slug like ${'ap-%'}`;
+    await pool.sql`delete from countries where slug like ${'testland-%'}`;
+    await pool.sql`delete from topics where slug like ${'maritime-%'}`;
     await app.close();
     await closeDatabase(pool.sql);
   });

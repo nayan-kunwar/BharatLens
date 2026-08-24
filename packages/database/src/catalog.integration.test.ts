@@ -32,6 +32,13 @@ describe.skipIf(!databaseUrl)('event catalog (postgres)', () => {
   });
 
   afterAll(async () => {
+    // Fixture slugs are namespaced so cleanup can never match other suites.
+    await pool.sql`delete from events where slug like ${'hormuz-%'} or slug like ${'draft-%'}`;
+    await pool.sql`delete from evidence where source_id in (select id from sources where slug like ${'reuters-%'})`;
+    await pool.sql`delete from articles where source_id in (select id from sources where slug like ${'reuters-%'})`;
+    await pool.sql`delete from sources where slug like ${'reuters-%'}`;
+    await pool.sql`delete from countries where slug like ${'iran-%'}`;
+    await pool.sql`delete from topics where slug like ${'energy-%'}`;
     await closeDatabase(pool.sql);
   });
 

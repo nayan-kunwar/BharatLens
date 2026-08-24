@@ -7,10 +7,20 @@ import { pingRedis } from './infrastructure/redis.js';
 
 export const IDLE_POLL_INTERVAL_MS = 30_000;
 
+/** Minimal queue surface used by the health endpoints; avoids BullMQ's
+ * invariant generics leaking into the app layer. */
+export interface QueueStatsSource {
+  readonly name: string;
+  getJobCounts(...keys: string[]): Promise<Record<string, number>>;
+}
+
 export type WorkerDeps = {
   database: DatabasePool;
   redis: Redis;
+  queues: Array<QueueStatsSource>;
 };
+
+const QUEUE_COUNT_KEYS = ['waiting', 'active', 'completed', 'failed', 'delayed', 'paused'] as const;
 
 export async function buildWorkerApp(logger: Logger, deps: WorkerDeps) {
   const app = Fastify({
@@ -24,7 +34,8 @@ export async function buildWorkerApp(logger: Logger, deps: WorkerDeps) {
     return ok({
       service: 'worker',
       status: 'ok',
-      mode: 'idle',
+      mode: 'processing',
+      queues: deps.queues.map((queue) => queue.name),
     });
   });
 
@@ -56,24 +67,21 @@ export async function buildWorkerApp(logger: Logger, deps: WorkerDeps) {
     return ok({
       service: 'worker',
       status: 'ok',
-      mode: 'idle',
+      mode: 'processing',
       checks: { postgres, redis },
     });
   });
 
-  return app;
-}
+  /** Small operational window into queue depth for observability. */
+  app.get('/queues', async () => {
+    const queues = await Promise.all(
+      deps.queues.map(async (queue) => ({
+        name: queue.name,
+        counts: await queue.getJobCounts(...QUEUE_COUNT_KEYS),
+      })),
+    );
+    return ok({ service: 'worker', queues });
+  });
 
-export function startIdleHeartbeat(logger: Logger, deps: WorkerDeps): NodeJS.Timeout {
-  return setInterval(() => {
-    void (async () => {
-      try {
-        await pingDatabase(deps.database.sql);
-        await pingRedis(deps.redis);
-        logger.info({ mode: 'idle' }, 'worker heartbeat');
-      } catch (error) {
-        logger.error({ err: error, mode: 'idle' }, 'worker heartbeat failed');
-      }
-    })();
-  }, IDLE_POLL_INTERVAL_MS);
+  return app;
 }

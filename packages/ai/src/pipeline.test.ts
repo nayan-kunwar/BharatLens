@@ -32,14 +32,22 @@ describe.skipIf(!databaseUrl)('analyzeEvent (postgres)', () => {
   });
 
   afterAll(async () => {
-    await closeDatabase(pool.sql);
+    if (pool) {
+      await pool.sql`delete from events where slug like ${'analyze-hormuz-%'} or slug like ${'analyze-fail-%'}`;
+      await pool.sql`delete from evidence where source_id in (select id from sources where slug like ${'fixture-ai-%'})`;
+      await pool.sql`delete from articles where source_id in (select id from sources where slug like ${'fixture-ai-%'})`;
+      await pool.sql`delete from sources where slug like ${'fixture-ai-%'}`;
+      await closeDatabase(pool.sql);
+    }
   });
 
   it('stores a draft assessment and analysis run without publishing', async () => {
     const suffix = randomUUID().slice(0, 8);
     const source = await catalog.createSource({
       name: `Agency ${suffix}`,
-      slug: `agency-ai-${suffix}`,
+      // Namespaced under fixture- so cross-package cleanup patterns never
+      // match another suite's sources.
+      slug: `fixture-ai-${suffix}`,
       type: 'NEWS_AGENCY',
     });
     const event = await catalog.createEvent({

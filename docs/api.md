@@ -39,3 +39,35 @@ Claims on the public API are `APPROVED` only.
 | GET    | `/api/v1/search`             | `q` (min 2 chars) plus pagination. ILIKE on title/summary until M12 FTS                                                                                             |
 
 Offset pagination: `meta.page`, `meta.limit`, `meta.total`, `meta.pageCount`.
+
+# Admin API (M10)
+
+Base path: `/api/v1/admin`. Authenticated with the HMAC-signed session cookie from
+`POST /auth/login` (see `ADR-007-admin-auth.md`). Errors use the same envelope with
+`UNAUTHORIZED` / `INVALID_CREDENTIALS` / `FORBIDDEN`.
+
+## Auth
+
+| Method | Path           | Notes                                                                 |
+| ------ | -------------- | --------------------------------------------------------------------- |
+| POST   | `/auth/login`  | `{ password }`. Rate limited to 10/min. Sets httpOnly session cookie. |
+| POST   | `/auth/logout` | Clears the cookie.                                                    |
+
+## Review workflow
+
+| Method | Path                        | Notes                                                                                                                  |
+| ------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/overview`                 | Per-status event counts, recent analysis runs, queue depth                                                             |
+| GET    | `/events`                   | Query: `status`, `q`, pagination. Meta includes `countsByStatus`                                                       |
+| GET    | `/events/:slug`             | Full detail incl. PENDING/REJECTED claims, DRAFT assessments, analysis runs                                            |
+| POST   | `/events`                   | `{ title, slug?, summary?, description?, importance?, occurredAt?, countryCodes[], topicSlugs[] }`. Creates CANDIDATE. |
+| PATCH  | `/events/:id`               | Edit title/summary/description/importance/eventType                                                                    |
+| POST   | `/claims/:id/review`        | `{ status: APPROVED \| REJECTED }` — controls public visibility                                                        |
+| PUT    | `/assessments/:id`          | Edit DRAFT only: overallLevel, reasoning, analysisConfidence, categories (replaces category rows)                      |
+| POST   | `/assessments/:id/publish`  | Transaction: DRAFT → PUBLISHED, event walks lifecycle to public state, `current_impact_assessment_id` swap             |
+| POST   | `/analysis-runs/:id/review` | Stamps `reviewedBy`/`reviewedAt` on a run                                                                              |
+| POST   | `/events/:id/analyze`       | Enqueues an analysis job on the worker (no LLM call on the API path)                                                   |
+| POST   | `/feeds/:slug/ingest`       | Enqueues an ingest job for a configured feed                                                                           |
+
+Publishing refuses assessments without categories and rejects re-publishing
+already-published versions; history is immutable and corrections create new versions.

@@ -7,6 +7,9 @@ const notFoundCodes = new Set<string>([
   ErrorCode.COUNTRY_NOT_FOUND,
   ErrorCode.TOPIC_NOT_FOUND,
   ErrorCode.SOURCE_NOT_FOUND,
+  ErrorCode.ASSESSMENT_NOT_FOUND,
+  ErrorCode.CLAIM_NOT_FOUND,
+  ErrorCode.ANALYSIS_RUN_NOT_FOUND,
 ]);
 
 function statusFromDomain(error: DomainError): number {
@@ -14,8 +17,20 @@ function statusFromDomain(error: DomainError): number {
     return 404;
   }
 
+  if (error.code === ErrorCode.UNAUTHORIZED || error.code === ErrorCode.INVALID_CREDENTIALS) {
+    return 401;
+  }
+
+  if (error.code === ErrorCode.FORBIDDEN) {
+    return 403;
+  }
+
   if (error.code === ErrorCode.VALIDATION_ERROR) {
     return 400;
+  }
+
+  if (error.code === ErrorCode.SERVICE_UNAVAILABLE) {
+    return 503;
   }
 
   return 400;

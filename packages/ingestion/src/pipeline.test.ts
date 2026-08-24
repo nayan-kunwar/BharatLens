@@ -8,6 +8,7 @@ import {
 } from '@bharatlens/database';
 import type { RawArticle } from './adapter.js';
 import { ingestFeed } from './pipeline.js';
+import { deleteFixtureData } from './test-support.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -21,8 +22,17 @@ describe.skipIf(!databaseUrl)('ingest pipeline (postgres)', () => {
   });
 
   afterAll(async () => {
+    await deleteFixtureData(pool, { sourceSlugPrefixes: ['fixture'] });
     await closeDatabase(pool.sql);
   });
+
+  /**
+   * Dedupe title/entity matching works inside a ±48h window around
+   * publishedAt. A random base date per run keeps runs independent even if a
+   * previous run left canonical fixture rows behind.
+   */
+  const randomWindowBase = (): Date =>
+    new Date(Date.UTC(2015, 0, 1) + Math.floor(Math.random() * 3650) * 86_400_000);
 
   it('inserts new articles once and records the job', async () => {
     const suffix = randomUUID().slice(0, 8);
@@ -75,6 +85,9 @@ describe.skipIf(!databaseUrl)('ingest pipeline (postgres)', () => {
       homepageUrl: 'https://example.test',
       feedUrl: 'https://example.test/rss.xml',
     };
+    const windowBase = randomWindowBase();
+    const publishedAt = (hours: number) =>
+      new Date(windowBase.getTime() + hours * 60 * 60 * 1000).toISOString();
 
     const first = await ingestFeed({
       catalog,
@@ -84,7 +97,7 @@ describe.skipIf(!databaseUrl)('ingest pipeline (postgres)', () => {
           {
             title: `Strait of Hormuz shipping disruption ${suffix}`,
             url: `https://example.test/a-${suffix}`,
-            publishedAt: '2019-03-04T00:00:00.000Z',
+            publishedAt: publishedAt(0),
             summary: `Maritime disruption near Hormuz ${suffix}.`,
           },
         ],
@@ -98,7 +111,7 @@ describe.skipIf(!databaseUrl)('ingest pipeline (postgres)', () => {
           {
             title: `Strait of Hormuz: shipping disruption ${suffix}`,
             url: `https://example.test/b-${suffix}`,
-            publishedAt: '2019-03-04T06:00:00.000Z',
+            publishedAt: publishedAt(6),
             summary: `Different outlet, same situation ${suffix}.`,
           },
         ],

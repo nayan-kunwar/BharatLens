@@ -31,6 +31,7 @@ Claims on the public API are `APPROVED` only.
 | GET    | `/api/v1/events/:id/sources` | `:id` is event UUID                                                                                                                                                 |
 | GET    | `/api/v1/events/:id/claims`  | Includes evidence; FACT vs ANALYSIS vs SCENARIO vs UNKNOWN                                                                                                          |
 | GET    | `/api/v1/events/:id/impact`  | Current published assessment and **published** version history (full snapshots: reasoning, evidence vs analysis fields, categories). Draft assessments are omitted. |
+| GET    | `/api/v1/events/:id/chain`   | Published impact-chain snapshots `{current, history}` with nodes and edges (M11). Drafts are omitted.                                                               |
 | GET    | `/api/v1/events/:id/updates` | Timeline                                                                                                                                                            |
 | GET    | `/api/v1/countries`          |                                                                                                                                                                     |
 | GET    | `/api/v1/countries/:code`    |                                                                                                                                                                     |
@@ -66,6 +67,8 @@ Base path: `/api/v1/admin`. Authenticated with the HMAC-signed session cookie fr
 | PUT    | `/assessments/:id`          | Edit DRAFT only: overallLevel, reasoning, analysisConfidence, categories (replaces category rows)                      |
 | POST   | `/assessments/:id/publish`  | Transaction: DRAFT → PUBLISHED, event walks lifecycle to public state, `current_impact_assessment_id` swap             |
 | POST   | `/analysis-runs/:id/review` | Stamps `reviewedBy`/`reviewedAt` on a run                                                                              |
+| PUT    | `/chains/:id`               | Replace a DRAFT chain's graph: `nodes[] of {key, kind, label, description?, category?}`, `edges[] of {from, to}`       |
+| POST   | `/chains/:id/publish`       | Freeze the draft version and move `events.current_impact_chain_id`                                                     |
 | POST   | `/events/:id/analyze`       | Enqueues an analysis job on the worker (no LLM call on the API path)                                                   |
 | POST   | `/feeds/:slug/ingest`       | Enqueues an ingest job for a configured feed                                                                           |
 

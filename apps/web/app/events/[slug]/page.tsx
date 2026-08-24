@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EventTimeline } from '../../components/event-timeline';
 import { ImpactBadge } from '../../components/impact-badge';
+import { ImpactChainFlow } from '../../components/impact-chain-flow';
 import { ImpactHistory } from '../../components/impact-history';
 import { ApiError, getEventPage } from '../../lib/api';
 import { formatDate, formatLabel } from '../../lib/presentation';
@@ -36,7 +37,7 @@ export default async function EventPage({ params }: EventPageProps) {
     throw error;
   }
 
-  const { claims, event, impact, sources, updates } = pageData;
+  const { chain, claims, event, impact, sources, updates } = pageData;
   const chronology = mergeEventChronology({
     updates,
     assessments: impact.history,
@@ -118,6 +119,21 @@ export default async function EventPage({ params }: EventPageProps) {
             ) : (
               <p className="empty-state">
                 No published India Impact categories are available for this event yet.
+              </p>
+            )}
+          </section>
+
+          <section className="detail-section" aria-labelledby="chain-heading">
+            <p className="eyebrow">Impact chain</p>
+            <h2 id="chain-heading">How this reaches India</h2>
+            {chain.current ? (
+              <>
+                {chain.current.reasoning ? <p>{chain.current.reasoning}</p> : null}
+                <ImpactChainFlow chain={chain.current} />
+              </>
+            ) : (
+              <p className="empty-state">
+                No published impact chain is available for this event yet.
               </p>
             )}
           </section>

@@ -52,6 +52,12 @@ export const eventRoutes: FastifyPluginAsync<{ queries: EventQueries }> = async 
     return ok(impact);
   });
 
+  app.get('/events/:id/chain', async (request) => {
+    const params = parseWithSchema(uuidParamsSchema, request.params);
+    const chain = await queries.getEventChain(params.id);
+    return ok(chain);
+  });
+
   app.get('/events/:id/updates', async (request) => {
     const params = parseWithSchema(uuidParamsSchema, request.params);
     const updates = await queries.listEventUpdates(params.id);

@@ -11,6 +11,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { articles } from './articles.js';
+import { impactChains } from './chains.js';
 import { countries } from './countries.js';
 import {
   analysisConfidenceEnum,
@@ -40,6 +41,10 @@ export const events = pgTable(
       (): AnyPgColumn => impactAssessments.id,
       { onDelete: 'set null' },
     ),
+    currentImpactChainId: uuid('current_impact_chain_id').references(
+      (): AnyPgColumn => impactChains.id,
+      { onDelete: 'set null' },
+    ),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -49,6 +54,7 @@ export const events = pgTable(
     index('events_occurred_at_idx').on(table.occurredAt),
     index('events_published_at_idx').on(table.publishedAt),
     index('events_current_impact_assessment_id_idx').on(table.currentImpactAssessmentId),
+    index('events_current_impact_chain_id_idx').on(table.currentImpactChainId),
   ],
 );
 

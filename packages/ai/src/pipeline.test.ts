@@ -87,6 +87,15 @@ describe.skipIf(!databaseUrl)('analyzeEvent (postgres)', () => {
     expect(first.eventStatus).toBe('REVIEW_REQUIRED');
     expect(second.eventStatus).toBe('REVIEW_REQUIRED');
 
+    // The stub emits an energy chain; the first run creates a draft, the
+    // second refreshes the same draft (same prompt version) instead of
+    // stacking versions.
+    expect(first.chainId).toBeTruthy();
+    expect(second.chainId).toBe(first.chainId);
+    const chains = await catalog.listEventChains(event.id);
+    expect(chains.filter((row) => row.status === 'DRAFT')).toHaveLength(1);
+    expect(chains[0]!.modelName).toBe('deterministic-stub');
+
     const after = await catalog.loadAnalysisContext(event.id);
 
     expect(after.event.currentImpactAssessmentId).toBeNull();
@@ -124,6 +133,17 @@ describe.skipIf(!databaseUrl)('analyzeEvent (postgres)', () => {
             ],
           },
           watchNext: ['Primary sources'],
+          impactChain: {
+            nodes: [
+              { key: 'event', kind: 'ROOT', label: 'Diplomatic note issued' },
+              { key: 'step', kind: 'CHANNEL', label: 'Partnerships reassess positioning' },
+              { key: 'impact', kind: 'IMPACT', label: 'India monitors partnership implications' },
+            ],
+            edges: [
+              { from: 'event', to: 'step' },
+              { from: 'step', to: 'impact' },
+            ],
+          },
         }),
       ),
     });

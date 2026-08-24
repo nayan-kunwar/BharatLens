@@ -44,19 +44,21 @@ There is **no** `india_impacts` 1:1 table and **no** `candidate_events` table.
 
 ## Indexes (and why)
 
-| Index                                                         | Why                      |
-| ------------------------------------------------------------- | ------------------------ |
-| `events_status_idx`                                           | Admin vs public listings |
-| `events_occurred_at_idx` / `events_published_at_idx`          | Chronological pages      |
-| `articles_content_hash_idx` / `articles_normalized_title_idx` | Dedupe lookups           |
-| `claims_event_id_idx`                                         | Event detail             |
-| `evidence_claim_id_idx`                                       | Evidence panel           |
-| `impact_assessments_event_id_idx`                             | History                  |
-| `analysis_runs_event_id_idx` / `analysis_runs_status_idx`     | Analysis audit           |
+| Index                                                                 | Why                      |
+| --------------------------------------------------------------------- | ------------------------ |
+| `events_status_idx`                                                   | Admin vs public listings |
+| `events_occurred_at_idx` / `events_published_at_idx`                  | Chronological pages      |
+| `articles_content_hash_idx` / `articles_normalized_title_idx`         | Dedupe lookups           |
+| `claims_event_id_idx`                                                 | Event detail             |
+| `evidence_claim_id_idx`                                               | Evidence panel           |
+| `impact_assessments_event_id_idx`                                     | History                  |
+| `analysis_runs_event_id_idx` / `analysis_runs_status_idx`             | Analysis audit           |
+| `impact_chains_event_id_idx` / `impact_chains_status_idx`             | Chain history            |
+| `impact_chain_nodes_chain_id_idx` / `impact_chain_edges_chain_id_idx` | Whole-graph loads        |
 
 ## Domain service
 
-`EventCatalog` in `packages/database` is the write API (create event, attach article, claims/evidence, versioned assessments, timeline, **idempotent article ingest**, **analysis runs**). REST is M2. RSS ingest is a CLI in `@bharatlens/ingestion`. Analysis is a CLI in `@bharatlens/ai`.
+`EventCatalog` in `packages/database` is the write API (create event, attach article, claims/evidence, versioned assessments and **versioned impact chains**, timeline, **idempotent article ingest**, **analysis runs**). Graph validity for chains (one ROOT, acyclic, reachable) lives in `validateChainGraph` in `@bharatlens/shared`. REST is M2. RSS ingest is a CLI in `@bharatlens/ingestion`. Analysis is a CLI in `@bharatlens/ai`.
 
 `pnpm db:seed` is idempotent by event slug and **additive for M4**: if the Hormuz example already exists from M3, a second published impact assessment and extra timeline rows are attached instead of skipping the event.
 

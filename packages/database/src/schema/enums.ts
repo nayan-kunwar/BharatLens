@@ -70,3 +70,5 @@ export const analysisRunStatusEnum = pgEnum('analysis_run_status', [
   'SUCCEEDED',
   'FAILED',
 ]);
+
+export const chainNodeKindEnum = pgEnum('chain_node_kind', ['ROOT', 'CHANNEL', 'IMPACT']);

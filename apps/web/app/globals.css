@@ -1255,3 +1255,120 @@ h3 {
   gap: 0.75rem;
   padding: 1rem;
 }
+
+/* Impact chain (M11) */
+
+.chain-flow {
+  display: grid;
+  gap: 0;
+  margin-top: 1rem;
+}
+
+.chain-flow__level {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.chain-flow__level + .chain-flow__level {
+  margin-top: 1.75rem;
+  position: relative;
+}
+
+/* Connector between levels */
+.chain-flow__level + .chain-flow__level::before {
+  content: '↓';
+  position: absolute;
+  top: -1.6rem;
+  left: 2rem;
+  font-size: 1.1rem;
+  opacity: 0.45;
+}
+
+.chain-node {
+  border: 1px solid var(--border, #ddd);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  max-width: 560px;
+  background: #fff;
+}
+
+.chain-node--root {
+  border-color: #333;
+  border-width: 2px;
+}
+
+.chain-node--impact {
+  background: #f4f9f4;
+}
+
+.chain-node__kind {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+  margin-bottom: 0.25rem;
+}
+
+.chain-node h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.chain-node p {
+  font-size: 0.88rem;
+  margin: 0.35rem 0 0;
+}
+
+.chain-node__category {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: #eef3fb;
+  color: #274b7a;
+}
+
+.chain-flow__meta {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+/* Admin chain editor */
+
+.admin-chain-editor {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-chain-node {
+  border: 1px solid var(--border, #ddd);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-chain-node legend {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.65;
+}
+
+.admin-chain-flows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  align-items: center;
+}
+
+.admin-chain-flow-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}

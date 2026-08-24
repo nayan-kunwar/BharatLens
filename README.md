@@ -4,7 +4,7 @@
 
 BharatLens turns global geopolitical events into source-backed explanations of what they mean for India. **India Impact** is a feature inside BharatLens, not a second product name.
 
-This repository is at **M10 — Admin + Human Review**. The worker ingests RSS feeds on a schedule, refreshes claims, and runs schema-validated LLM analysis on demand. Operators review drafts in `/admin` (cookie-authenticated), approve claims, edit assessments, and publish. Public pages show only reviewed, published content.
+This repository is at **M11 — Impact Chains**. The worker ingests RSS feeds on a schedule, refreshes claims, and runs schema-validated LLM analysis on demand. Operators review drafts in `/admin` (cookie-authenticated), approve claims, edit assessments and causal impact chains, and publish. Public pages show only reviewed, published content — including each event's published impact chain rendered as a top-down pathway.
 
 ## What runs
 

@@ -182,4 +182,82 @@ describe.skipIf(!databaseUrl)('event catalog (postgres)', () => {
       DomainError,
     );
   });
+
+  it('stores, publishes, and freezes an impact chain with a pointer swap', async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const event = await catalog.createEvent({
+      title: 'Chain fixture',
+      slug: `draft-${suffix}`,
+    });
+
+    const chain = await catalog.createDraftChain(event.id, {
+      nodes: [
+        { key: 'root', kind: 'ROOT', label: 'Disruption reported' },
+        { key: 'route', kind: 'CHANNEL', label: 'Transport risk rises' },
+        { key: 'bill', kind: 'IMPACT', label: 'Import bill pressure' },
+      ],
+      edges: [
+        { from: 'root', to: 'route' },
+        { from: 'route', to: 'bill' },
+      ],
+      modelName: 'test',
+      promptVersion: 'chain-test-v1',
+    });
+    expect(chain.version).toBe(1);
+    expect(chain.nodes).toHaveLength(3);
+    expect(chain.edges).toHaveLength(2);
+
+    // Invalid graphs must be rejected before persistence.
+    await expect(
+      catalog.createDraftChain(event.id, {
+        nodes: [
+          { key: 'root', kind: 'ROOT', label: 'A' },
+          { key: 'a', kind: 'CHANNEL', label: 'B' },
+          { key: 'b', kind: 'IMPACT', label: 'C' },
+        ],
+        edges: [
+          { from: 'root', to: 'a' },
+          { from: 'a', to: 'root' },
+        ],
+      }),
+    ).rejects.toThrow(/CYCLE/);
+
+    const published = await catalog.publishChain(chain.id);
+    expect(published.chain.status).toBe('PUBLISHED');
+    expect(published.event.currentImpactChainId).toBe(chain.id);
+
+    // Published chains are immutable history.
+    await expect(
+      catalog.updateDraftChain(chain.id, {
+        nodes: [
+          { key: 'root', kind: 'ROOT', label: 'Rewritten root' },
+          { key: 'a', kind: 'CHANNEL', label: 'B' },
+          { key: 'b', kind: 'IMPACT', label: 'C' },
+        ],
+        edges: [
+          { from: 'root', to: 'a' },
+          { from: 'a', to: 'b' },
+        ],
+      }),
+    ).rejects.toThrow(/DRAFT/);
+
+    await expect(catalog.publishChain(chain.id)).rejects.toThrow(/DRAFT/);
+
+    // A second draft takes the next version and publishing swaps the pointer.
+    const second = await catalog.createDraftChain(event.id, {
+      nodes: [
+        { key: 'root', kind: 'ROOT', label: 'Updated root' },
+        { key: 'direct', kind: 'CHANNEL', label: 'Direct channel' },
+        { key: 'bill2', kind: 'IMPACT', label: 'New impact' },
+      ],
+      edges: [
+        { from: 'root', to: 'direct' },
+        { from: 'direct', to: 'bill2' },
+      ],
+    });
+    expect(second.version).toBe(2);
+
+    const republished = await catalog.publishChain(second.id);
+    expect(republished.event.currentImpactChainId).toBe(second.id);
+  });
 });

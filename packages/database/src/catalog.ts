@@ -2,6 +2,9 @@ import {
   type AnalysisConfidence,
   type AnalysisRunStatus,
   type ArticleStatus,
+  type ChainEdgeInput,
+  type ChainNodeInput,
+  type ChainNodeKind,
   type ClaimStatus,
   type ClaimType,
   type EventStatus,
@@ -19,11 +22,13 @@ import {
   describeEvidenceCounts,
   isOfficialSourceType,
   nextStatusAfterTimelineUpdate,
+  validateChainGraph,
 } from '@bharatlens/shared';
 import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, ne } from 'drizzle-orm';
 import type { Database } from './client.js';
 import { analysisRuns, type AnalysisInputReferences } from './schema/analysis.js';
 import { articles } from './schema/articles.js';
+import { impactChainEdges, impactChainNodes, impactChains } from './schema/chains.js';
 import { claims, evidence } from './schema/claims.js';
 import { countries } from './schema/countries.js';
 import {
@@ -1016,5 +1021,235 @@ export class EventCatalog {
       throw new DomainError('EVENT_NOT_FOUND', 'Event not found');
     }
     return event;
+  }
+
+  // --- Impact chains (M11) ---
+
+  /**
+   * Creates a new DRAFT chain for an event. Nodes arrive keyed by caller
+   * strings (AI output or editor state); edges reference those keys and are
+   * resolved to node ids inside the transaction.
+   */
+  async createDraftChain(
+    eventId: string,
+    input: {
+      nodes: Array<ChainNodeInput & { kind: ChainNodeKind }>;
+      edges: ChainEdgeInput[];
+      reasoning?: string;
+      modelName?: string;
+      promptVersion?: string;
+    },
+  ) {
+    const issue = validateChainGraph(input.nodes, input.edges);
+    if (issue) {
+      throw new DomainError('VALIDATION_ERROR', `Invalid impact chain: ${issue}`);
+    }
+
+    await this.requireEvent(eventId);
+
+    return this.db.transaction(async (tx) => {
+      const [latest] = await tx
+        .select({ version: impactChains.version })
+        .from(impactChains)
+        .where(eq(impactChains.eventId, eventId))
+        .orderBy(desc(impactChains.version))
+        .limit(1);
+
+      const [chain] = await tx
+        .insert(impactChains)
+        .values({
+          eventId,
+          version: (latest?.version ?? 0) + 1,
+          status: 'DRAFT',
+          reasoning: input.reasoning,
+          modelName: input.modelName,
+          promptVersion: input.promptVersion,
+        })
+        .returning();
+
+      if (!chain) {
+        throw new DomainError('INTERNAL_ERROR', 'Failed to create impact chain');
+      }
+
+      const insertedNodes = await tx
+        .insert(impactChainNodes)
+        .values(
+          input.nodes.map((node, index) => ({
+            chainId: chain.id,
+            kind: node.kind,
+            label: node.label,
+            description: node.description ?? null,
+            category: (node.category as ImpactCategory | null | undefined) ?? null,
+            sortOrder: index,
+          })),
+        )
+        .returning();
+
+      const nodeIdByKey = new Map(
+        input.nodes.map((node, index) => [node.key, insertedNodes[index]!.id]),
+      );
+
+      if (input.edges.length > 0) {
+        await tx.insert(impactChainEdges).values(
+          input.edges.map((edge) => ({
+            chainId: chain.id,
+            fromNodeId: nodeIdByKey.get(edge.from)!,
+            toNodeId: nodeIdByKey.get(edge.to)!,
+          })),
+        );
+      }
+
+      const insertedEdges =
+        input.edges.length > 0
+          ? await tx.select().from(impactChainEdges).where(eq(impactChainEdges.chainId, chain.id))
+          : [];
+
+      return { ...chain, nodes: insertedNodes, edges: insertedEdges };
+    });
+  }
+
+  /** Replaces a DRAFT chain's graph wholesale; published versions are immutable. */
+  async updateDraftChain(
+    chainId: string,
+    input: { nodes: Array<ChainNodeInput & { kind: ChainNodeKind }>; edges: ChainEdgeInput[] },
+  ) {
+    const issue = validateChainGraph(input.nodes, input.edges);
+    if (issue) {
+      throw new DomainError('VALIDATION_ERROR', `Invalid impact chain: ${issue}`);
+    }
+
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(impactChains)
+        .where(eq(impactChains.id, chainId))
+        .limit(1);
+
+      if (!existing) {
+        throw new DomainError('CHAIN_NOT_FOUND', 'Impact chain not found');
+      }
+      if (existing.status !== 'DRAFT') {
+        throw new DomainError(
+          'INVALID_EVENT_STATUS',
+          `Only DRAFT chains can be edited (chain is ${existing.status})`,
+        );
+      }
+
+      await tx.delete(impactChainNodes).where(eq(impactChainNodes.chainId, chainId));
+
+      const insertedNodes = await tx
+        .insert(impactChainNodes)
+        .values(
+          input.nodes.map((node, index) => ({
+            chainId,
+            kind: node.kind,
+            label: node.label,
+            description: node.description ?? null,
+            category: (node.category as ImpactCategory | null | undefined) ?? null,
+            sortOrder: index,
+          })),
+        )
+        .returning();
+
+      const nodeIdByKey = new Map(
+        input.nodes.map((node, index) => [node.key, insertedNodes[index]!.id]),
+      );
+
+      const insertedEdges =
+        input.edges.length > 0
+          ? await tx
+              .insert(impactChainEdges)
+              .values(
+                input.edges.map((edge) => ({
+                  chainId,
+                  fromNodeId: nodeIdByKey.get(edge.from)!,
+                  toNodeId: nodeIdByKey.get(edge.to)!,
+                })),
+              )
+              .returning()
+          : [];
+
+      return { ...existing, nodes: insertedNodes, edges: insertedEdges };
+    });
+  }
+
+  /**
+   * Publishes a DRAFT chain atomically: stamps PUBLISHED/publishedAt and moves
+   * the event's current-chain pointer. Event lifecycle status is deliberately
+   * untouched — public rendering is already gated by the public-event guards.
+   */
+  async publishChain(chainId: string) {
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(impactChains)
+        .where(eq(impactChains.id, chainId))
+        .limit(1);
+
+      if (!existing) {
+        throw new DomainError('CHAIN_NOT_FOUND', 'Impact chain not found');
+      }
+      if (existing.status !== 'DRAFT') {
+        throw new DomainError(
+          'INVALID_EVENT_STATUS',
+          `Only DRAFT chains can be published (chain is ${existing.status})`,
+        );
+      }
+
+      const nodes = await tx
+        .select({ id: impactChainNodes.id })
+        .from(impactChainNodes)
+        .where(eq(impactChainNodes.chainId, chainId));
+      const edges = await tx
+        .select({ id: impactChainEdges.id })
+        .from(impactChainEdges)
+        .where(eq(impactChainEdges.chainId, chainId));
+
+      if (nodes.length === 0 || edges.length === 0) {
+        throw new DomainError(
+          'INSUFFICIENT_EVIDENCE',
+          'Refusing to publish a chain without nodes and edges',
+        );
+      }
+
+      const now = new Date();
+      const [chain] = await tx
+        .update(impactChains)
+        .set({ status: 'PUBLISHED', publishedAt: now })
+        .where(eq(impactChains.id, chainId))
+        .returning();
+
+      const [event] = await tx
+        .update(events)
+        .set({ currentImpactChainId: chainId, updatedAt: now })
+        .where(eq(events.id, existing.eventId))
+        .returning();
+
+      return { chain: chain!, event: event! };
+    });
+  }
+
+  async findDraftChain(eventId: string, promptVersion?: string) {
+    const [row] = await this.db
+      .select()
+      .from(impactChains)
+      .where(
+        and(
+          eq(impactChains.eventId, eventId),
+          eq(impactChains.status, 'DRAFT'),
+          ...(promptVersion ? [eq(impactChains.promptVersion, promptVersion)] : []),
+        ),
+      )
+      .orderBy(desc(impactChains.createdAt))
+      .limit(1);
+    return row ?? null;
+  }
+
+  async listEventChains(eventId: string) {
+    return this.db
+      .select()
+      .from(impactChains)
+      .where(eq(impactChains.eventId, eventId))
+      .orderBy(desc(impactChains.version));
   }
 }

@@ -145,6 +145,24 @@ CANDIDATE / REVIEW_REQUIRED event
 Published versions are immutable; corrections create and publish new versions.
 The API refuses to boot without `ADMIN_PASSWORD`.
 
+## M11 impact chains
+
+Each event can carry a causal pathway — event → transmission steps → India-facing
+consequences — stored as a versioned graph (`ADR-008-impact-chains.md`):
+
+```text
+impact_chains (v1, v2, …) ── nodes (ROOT/CHANNEL/IMPACT) + edges
+        ▲
+events.current_impact_chain_id
+```
+
+- The AI pipeline (prompt v2) proposes a DRAFT chain; reviewers edit it in the
+  console and publish it. Published versions are immutable history.
+- Graph validity (one root, acyclic, reachable) is enforced by
+  `validateChainGraph` in `@bharatlens/shared` at every entry point.
+- The public event page renders the current chain as a top-down stepper,
+  layered client-side from the graph — no per-event hardcoding.
+
 ## Next
 
-Candidate-event auto-creation from unmatched ingested articles (its own milestone), then impact chains (M11).
+Candidate-event auto-creation from unmatched ingested articles (own milestone), search tuning (M12), geopolitical map (M13).

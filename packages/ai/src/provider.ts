@@ -71,6 +71,64 @@ export class DeterministicAnalysisModel implements AnalysisModel {
       watchNext: energy
         ? ['Official shipping advisories', 'India crude import commentary']
         : ['Primary-source confirmation', 'Government of India statements'],
+      impactChain: energy
+        ? {
+            nodes: [
+              { key: 'event', kind: 'ROOT', label: 'Energy shipping disruption reported' },
+              {
+                key: 'transport',
+                kind: 'CHANNEL',
+                label: 'Seaborne energy transport risk rises',
+                category: 'ENERGY',
+              },
+              {
+                key: 'cost',
+                kind: 'CHANNEL',
+                label: 'Freight and insurance costs increase',
+                category: 'TRADE',
+              },
+              {
+                key: 'imports',
+                kind: 'IMPACT',
+                label: "India's energy import bill faces upward pressure",
+                category: 'ENERGY',
+              },
+              {
+                key: 'inflation',
+                kind: 'IMPACT',
+                label: 'Inflationary pressure becomes possible',
+                category: 'ECONOMY',
+              },
+            ],
+            edges: [
+              { from: 'event', to: 'transport' },
+              { from: 'event', to: 'cost' },
+              { from: 'transport', to: 'imports' },
+              { from: 'imports', to: 'inflation' },
+              { from: 'cost', to: 'inflation' },
+            ],
+          }
+        : {
+            nodes: [
+              { key: 'event', kind: 'ROOT', label: 'Geopolitical development reported' },
+              {
+                key: 'diplomacy',
+                kind: 'CHANNEL',
+                label: 'Diplomatic positioning shifts',
+                category: 'DIPLOMACY',
+              },
+              {
+                key: 'watch',
+                kind: 'IMPACT',
+                label: 'India monitors implications for its partnerships',
+                category: 'DIPLOMACY',
+              },
+            ],
+            edges: [
+              { from: 'event', to: 'diplomacy' },
+              { from: 'diplomacy', to: 'watch' },
+            ],
+          },
     });
   }
 }

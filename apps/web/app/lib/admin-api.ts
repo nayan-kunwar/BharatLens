@@ -128,6 +128,25 @@ export type AdminEventDetail = AdminEventRow & {
   watchItems: Array<{ id: string; label: string; sortOrder: number }>;
   claims: AdminClaim[];
   assessments: AdminAssessment[];
+  chains: Array<{
+    id: string;
+    version: number;
+    status: 'DRAFT' | 'PUBLISHED';
+    reasoning: string | null;
+    modelName: string | null;
+    promptVersion: string | null;
+    publishedAt: string | null;
+    createdAt: string | null;
+    nodes: Array<{
+      id: string;
+      kind: 'ROOT' | 'CHANNEL' | 'IMPACT';
+      label: string;
+      description: string | null;
+      category: string | null;
+      sortOrder: number;
+    }>;
+    edges: Array<{ id: string; fromNodeId: string; toNodeId: string }>;
+  }>;
   analysisRuns: Array<{
     id: string;
     status: string;

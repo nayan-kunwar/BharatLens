@@ -81,4 +81,16 @@ export type IngestionJobStatus = (typeof INGESTION_JOB_STATUSES)[number];
 export const ANALYSIS_RUN_STATUSES = ['RUNNING', 'SUCCEEDED', 'FAILED'] as const;
 export type AnalysisRunStatus = (typeof ANALYSIS_RUN_STATUSES)[number];
 
+/**
+ * Impact-chain node roles. ROOT is the world event itself; CHANNEL nodes are
+ * causal transmission steps; IMPACT nodes are the India-facing consequences.
+ */
+export const CHAIN_NODE_KINDS = ['ROOT', 'CHANNEL', 'IMPACT'] as const;
+export type ChainNodeKind = (typeof CHAIN_NODE_KINDS)[number];
+
+export const CHAIN_LIMITS = {
+  MAX_NODES: 20,
+  MAX_EDGES: 30,
+} as const;
+
 export const EXCERPT_MAX_LENGTH = 500;

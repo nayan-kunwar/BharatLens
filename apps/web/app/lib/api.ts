@@ -77,6 +77,31 @@ export type EventImpact = {
   history: ImpactAssessmentSnapshot[];
 };
 
+export type ChainNode = {
+  id: string;
+  kind: 'ROOT' | 'CHANNEL' | 'IMPACT';
+  label: string;
+  description: string | null;
+  category: string | null;
+};
+
+export type EventChainSnapshot = {
+  id: string;
+  version: number;
+  status: 'PUBLISHED';
+  reasoning: string | null;
+  modelName: string | null;
+  promptVersion: string | null;
+  publishedAt: string | null;
+  nodes: ChainNode[];
+  edges: Array<{ id: string; fromNodeId: string; toNodeId: string }>;
+};
+
+export type EventChain = {
+  current: EventChainSnapshot | null;
+  history: EventChainSnapshot[];
+};
+
 export type Claim = {
   id: string;
   statement: string;
@@ -214,11 +239,12 @@ export async function getEvents(params: EventListParams = {}) {
 export async function getEventPage(slug: string) {
   const event = await fetchApi<EventDetail>(`/api/v1/events/${encodeURIComponent(slug)}`);
   const eventId = event.data.id;
-  const [impact, claims, sources, updates] = await Promise.all([
+  const [impact, claims, sources, updates, chain] = await Promise.all([
     fetchApi<EventImpact>(`/api/v1/events/${eventId}/impact`),
     fetchApi<Claim[]>(`/api/v1/events/${eventId}/claims`),
     fetchApi<EventSource[]>(`/api/v1/events/${eventId}/sources`),
     fetchApi<EventUpdate[]>(`/api/v1/events/${eventId}/updates`),
+    fetchApi<EventChain>(`/api/v1/events/${eventId}/chain`),
   ]);
 
   return {
@@ -227,6 +253,7 @@ export async function getEventPage(slug: string) {
     claims: claims.data,
     sources: sources.data,
     updates: updates.data,
+    chain: chain.data,
   };
 }
 

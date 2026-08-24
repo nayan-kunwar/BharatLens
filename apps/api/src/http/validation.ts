@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import {
+  ANALYSIS_CONFIDENCE_LEVELS,
+  CHAIN_NODE_KINDS,
   DomainError,
   IMPORTANCE_LEVELS,
   IMPACT_CATEGORIES,
   IMPACT_LEVELS,
-  ANALYSIS_CONFIDENCE_LEVELS,
   EVENT_STATUSES,
 } from '@bharatlens/shared';
 
@@ -100,6 +101,33 @@ export const draftAssessmentPatchSchema = z
 
 export const analysisRunReviewBodySchema = z.object({
   reviewedBy: z.string().min(1).max(120).default('admin'),
+});
+
+const chainKey = z
+  .string()
+  .trim()
+  .min(1)
+  .max(24)
+  .regex(/^[a-zA-Z0-9_-]+$/, 'chain node keys must be alphanumeric');
+
+export const chainDraftSchema = z.object({
+  reasoning: z.string().max(4000).optional(),
+  nodes: z
+    .array(
+      z.object({
+        key: chainKey,
+        kind: z.enum(CHAIN_NODE_KINDS),
+        label: z.string().trim().min(3).max(200),
+        description: z.string().trim().max(500).optional(),
+        category: z.enum(IMPACT_CATEGORIES).optional(),
+      }),
+    )
+    .min(3)
+    .max(20),
+  edges: z
+    .array(z.object({ from: chainKey, to: chainKey }))
+    .min(2)
+    .max(30),
 });
 
 export { slugify };

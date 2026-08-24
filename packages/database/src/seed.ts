@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { closeDatabase, createDatabase } from './client.js';
 import { EventCatalog } from './catalog.js';
+import { impactChains } from './schema/chains.js';
 import { countries } from './schema/countries.js';
 import { eventUpdates, events, impactAssessments } from './schema/events.js';
 import { topics } from './schema/topics.js';
@@ -263,6 +264,18 @@ async function seedHormuz(ids: {
       impactChange: 'Overall India Impact HIGH → MEDIUM in v2.',
     },
   ]);
+
+  // M11: seed an example published impact chain so the public UI shows the
+  // feature immediately. Additive — skipped once a published chain exists.
+  if ((await publishedChainCount(event.id)) === 0) {
+    const chain = await catalog.createDraftChain(event.id, {
+      ...HORMUZ_CHAIN,
+      reasoning:
+        'Hand-authored example chain showing the causal pathway from a shipping disruption to India-facing effects.',
+      promptVersion: 'hand-authored-m11',
+    });
+    await catalog.publishChain(chain.id);
+  }
 }
 
 async function seedLngExposure(ids: {
@@ -350,6 +363,63 @@ async function seedLngExposure(ids: {
     },
   ]);
 }
+
+async function publishedChainCount(eventId: string) {
+  const rows = await db
+    .select({ id: impactChains.id })
+    .from(impactChains)
+    .where(and(eq(impactChains.eventId, eventId), eq(impactChains.status, 'PUBLISHED')));
+  return rows.length;
+}
+
+const HORMUZ_CHAIN = {
+  nodes: [
+    {
+      key: 'root',
+      kind: 'ROOT' as const,
+      label: 'Shipping disruption reported near Hormuz',
+      category: null,
+    },
+    {
+      key: 'route',
+      kind: 'CHANNEL' as const,
+      label: 'Seaborne crude transport risk rises',
+      category: 'ENERGY',
+    },
+    {
+      key: 'freight',
+      kind: 'CHANNEL' as const,
+      label: 'Freight and insurance costs increase',
+      category: 'TRADE',
+    },
+    {
+      key: 'imports',
+      kind: 'IMPACT' as const,
+      label: "India's energy import bill faces upward pressure",
+      category: 'ENERGY',
+    },
+    {
+      key: 'inflation',
+      kind: 'IMPACT' as const,
+      label: 'Inflationary pressure possible via energy and freight',
+      category: 'ECONOMY',
+    },
+    {
+      key: 'policy',
+      kind: 'IMPACT' as const,
+      label: 'Rupee and monetary policy come under watch',
+      category: 'ECONOMY',
+    },
+  ],
+  edges: [
+    { from: 'root', to: 'route' },
+    { from: 'root', to: 'freight' },
+    { from: 'route', to: 'imports' },
+    { from: 'imports', to: 'inflation' },
+    { from: 'freight', to: 'inflation' },
+    { from: 'inflation', to: 'policy' },
+  ],
+};
 
 try {
   const india = await ensureCountry({ code: 'IN', name: 'India', slug: 'india' });

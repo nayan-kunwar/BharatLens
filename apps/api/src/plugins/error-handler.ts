@@ -10,6 +10,7 @@ const notFoundCodes = new Set<string>([
   ErrorCode.ASSESSMENT_NOT_FOUND,
   ErrorCode.CLAIM_NOT_FOUND,
   ErrorCode.ANALYSIS_RUN_NOT_FOUND,
+  ErrorCode.CHAIN_NOT_FOUND,
 ]);
 
 function statusFromDomain(error: DomainError): number {

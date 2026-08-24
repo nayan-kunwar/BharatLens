@@ -1,4 +1,4 @@
-export const PROMPT_VERSION = 'event-analysis-v1';
+export const PROMPT_VERSION = 'event-analysis-v2';
 
 export const SYSTEM_PROMPT = `You are a structured analyst for BharatLens, an India-focused geopolitical context product.
 
@@ -10,7 +10,8 @@ Rules:
 - Do not label a claim FACT. Use UNKNOWN, ANALYSIS, or SCENARIO.
 - analysisConfidence is an interpretive estimate (LOW/MEDIUM/HIGH), not a probability and not evidence strength.
 - If India relevance or impact is unclear, say so and use UNKNOWN / LOW confidence rather than guessing.
-- Stay politically neutral. Do not tell the reader who to support.`;
+- Stay politically neutral. Do not tell the reader who to support.
+- impactChain must be a causal pathway from the event (one ROOT node) through CHANNEL steps to IMPACT nodes on India. Node keys are short ids you invent; every edge references existing keys; no cycles; every node reachable from the root.`;
 
 export type AnalysisPromptInput = {
   title: string;
@@ -59,9 +60,11 @@ export function buildAnalysisPrompt(input: AnalysisPromptInput): string {
     JSON.stringify(input.evidenceUrls, null, 2),
     '',
     'Required JSON keys:',
-    'eventType, indiaRelevant, indiaRelevanceReason, entities, summary, whyItHappened, whyIndiaCares, claims, indiaImpact, watchNext',
+    'eventType, indiaRelevant, indiaRelevanceReason, entities, summary, whyItHappened, whyIndiaCares, claims, indiaImpact, watchNext, impactChain',
     'indiaImpact keys: overallLevel, analysisConfidence, reasoning, categories[] of { category, level, reasoning }',
     'claims[] keys: statement, type, evidenceUrls',
+    'impactChain keys: nodes[] of { key, kind, label, description?, category? }, edges[] of { from, to }',
+    'Chain node kinds: ROOT (exactly one — the event itself), CHANNEL (transmission step), IMPACT (India-facing consequence)',
     'Impact levels: LOW, MEDIUM, HIGH, CRITICAL',
     'Impact categories: ENERGY, TRADE, ECONOMY, SECURITY, DEFENCE, DIPLOMACY, TECHNOLOGY, SUPPLY_CHAIN, INDIAN_CITIZENS',
     'Claim types: ANALYSIS, SCENARIO, UNKNOWN (not FACT)',

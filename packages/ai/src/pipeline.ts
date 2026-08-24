@@ -17,6 +17,8 @@ export type AnalyzeEventResult = {
   promptVersion: string;
   assessmentId?: string;
   assessmentVersion?: number;
+  chainId?: string;
+  chainVersion?: number;
   claimsCreated: number;
   watchItemsAdded: number;
   eventStatus?: string;
@@ -163,6 +165,34 @@ export async function analyzeEvent(input: {
       watchItemsAdded += 1;
     }
 
+    // Impact chain: refresh the draft for this prompt version or create the
+    // next version. Graph invariants are re-checked by the catalog.
+    const chainNodes = analysis.impactChain.nodes.map((node) => ({
+      key: node.key,
+      kind: node.kind,
+      label: node.label,
+      description: node.description,
+      category: node.category ?? null,
+    }));
+    const chainEdges = analysis.impactChain.edges.map((edge) => ({
+      from: edge.from,
+      to: edge.to,
+    }));
+
+    const existingDraftChain = await input.catalog.findDraftChain(event.id, PROMPT_VERSION);
+    const chain = existingDraftChain
+      ? await input.catalog.updateDraftChain(existingDraftChain.id, {
+          nodes: chainNodes,
+          edges: chainEdges,
+        })
+      : await input.catalog.createDraftChain(event.id, {
+          nodes: chainNodes,
+          edges: chainEdges,
+          reasoning: analysis.indiaImpact.reasoning,
+          modelName: input.model.name,
+          promptVersion: PROMPT_VERSION,
+        });
+
     for (const nextStatus of statusesAfterSuccessfulAnalysis(context.event.status)) {
       await input.catalog.transitionEvent(event.id, nextStatus);
     }
@@ -179,6 +209,8 @@ export async function analyzeEvent(input: {
       status: 'SUCCEEDED',
       assessmentId: assessment.id,
       assessmentVersion: assessment.version,
+      chainId: chain.id,
+      chainVersion: chain.version,
       claimsCreated,
       watchItemsAdded,
       eventStatus: updated?.status,

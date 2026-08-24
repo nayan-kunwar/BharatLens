@@ -224,4 +224,103 @@ describe.skipIf(!databaseUrl)('admin api v1', () => {
     expect(result.enqueued).toBe(true);
     expect(result.jobId.startsWith(`analyze__${eventSlug}__`)).toBe(true);
   });
+
+  it('edits and publishes an impact chain, exposing only the published version publicly', async () => {
+    const [event] = (
+      await pool.sql<[{ id: string; slug: string }]>`
+        select id, slug from events where slug = ${eventSlug} limit 1`
+    ).map((row) => row);
+
+    const chain = await catalog.createDraftChain(event!.id, {
+      nodes: [
+        { key: 'root', kind: 'ROOT', label: 'Integration chain root' },
+        { key: 'step', kind: 'CHANNEL', label: 'Integration channel step' },
+        { key: 'impact', kind: 'IMPACT', label: 'Integration India impact' },
+      ],
+      edges: [
+        { from: 'root', to: 'step' },
+        { from: 'step', to: 'impact' },
+      ],
+      promptVersion: 'admin-integration-v1',
+    });
+
+    // Public surface must stay empty while the chain is a draft.
+    const draftPublic = await app.inject({
+      method: 'GET',
+      url: `/api/v1/events/${event!.id}/chain`,
+    });
+    expect(JSON.parse(draftPublic.body).data.current).toBeNull();
+
+    const edited = await app.inject({
+      method: 'PUT',
+      url: `/api/v1/admin/chains/${chain.id}`,
+      headers: { cookie },
+      payload: {
+        reasoning: 'Edited during integration test.',
+        nodes: [
+          { key: 'n0', kind: 'ROOT', label: 'Rewritten root label' },
+          { key: 'n1', kind: 'CHANNEL', label: 'Rewritten channel label' },
+          { key: 'n2', kind: 'IMPACT', label: 'Rewritten impact label' },
+        ],
+        edges: [
+          { from: 'n0', to: 'n1' },
+          { from: 'n1', to: 'n2' },
+        ],
+      },
+    });
+    expect(edited.statusCode).toBe(200);
+    expect(JSON.parse(edited.body).data.nodes[0].label).toBe('Rewritten root label');
+
+    const published = await app.inject({
+      method: 'POST',
+      url: `/api/v1/admin/chains/${chain.id}/publish`,
+      headers: { cookie },
+    });
+    expect(published.statusCode).toBe(200);
+    expect(JSON.parse(published.body).data.event.currentImpactChainId).toBe(chain.id);
+
+    const publicChain = await app.inject({
+      method: 'GET',
+      url: `/api/v1/events/${event!.id}/chain`,
+    });
+    const data = JSON.parse(publicChain.body).data;
+    expect(data.current.version).toBe(1);
+    expect(data.history).toHaveLength(1);
+    expect(
+      data.history.every((snapshot: { status: string }) => snapshot.status === 'PUBLISHED'),
+    ).toBe(true);
+
+    // Cycle payloads are rejected at the route boundary.
+    const cycleAttempt = await catalog.createDraftChain(event!.id, {
+      nodes: [
+        { key: 'r', kind: 'ROOT', label: 'Cycle root' },
+        { key: 'a', kind: 'CHANNEL', label: 'Cycle a' },
+        { key: 'b', kind: 'IMPACT', label: 'Cycle b' },
+      ],
+      edges: [
+        { from: 'r', to: 'a' },
+        { from: 'a', to: 'b' },
+      ],
+      promptVersion: 'admin-integration-v1-cycle',
+    });
+    const rejected = await app.inject({
+      method: 'PUT',
+      url: `/api/v1/admin/chains/${cycleAttempt.id}`,
+      headers: { cookie },
+      payload: {
+        nodes: [
+          { key: 'n0', kind: 'ROOT', label: 'Cycle root' },
+          { key: 'n1', kind: 'CHANNEL', label: 'Cycle a' },
+          { key: 'n2', kind: 'IMPACT', label: 'Cycle b' },
+        ],
+        edges: [
+          { from: 'n0', to: 'n1' },
+          { from: 'n1', to: 'n2' },
+          { from: 'n2', to: 'n1' },
+        ],
+      },
+    });
+    expect(rejected.statusCode).toBe(400);
+    expect(JSON.parse(rejected.body).error.message).toMatch(/CYCLE/);
+  });
 });

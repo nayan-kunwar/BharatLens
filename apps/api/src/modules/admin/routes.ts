@@ -9,6 +9,7 @@ import {
   adminEventListQuerySchema,
   adminUpdateEventSchema,
   analysisRunReviewBodySchema,
+  chainDraftSchema,
   claimReviewBodySchema,
   draftAssessmentPatchSchema,
   loginBodySchema,
@@ -178,6 +179,19 @@ export const adminApiRoutes: FastifyPluginAsync<AdminRouteDeps> = async (app, op
     const body = parseWithSchema(analysisRunReviewBodySchema, request.body);
     const run = await catalog.reviewAnalysisRun(params.id, body.reviewedBy);
     return ok(run);
+  });
+
+  app.put('/chains/:id', async (request) => {
+    const params = parseWithSchema(uuidParamsSchema, request.params);
+    const body = parseWithSchema(chainDraftSchema, request.body);
+    const chain = await catalog.updateDraftChain(params.id, body);
+    return ok(chain);
+  });
+
+  app.post('/chains/:id/publish', async (request) => {
+    const params = parseWithSchema(uuidParamsSchema, request.params);
+    const result = await catalog.publishChain(params.id);
+    return ok(result);
   });
 
   app.post('/events/:id/analyze', async (request) => {

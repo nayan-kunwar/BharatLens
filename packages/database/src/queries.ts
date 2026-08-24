@@ -8,6 +8,7 @@ import { analysisRuns } from './schema/analysis.js';
 import { and, asc, count, desc, eq, ilike, inArray, or, type SQL } from 'drizzle-orm';
 import type { Database } from './client.js';
 import { articles } from './schema/articles.js';
+import { impactChainEdges, impactChainNodes, impactChains } from './schema/chains.js';
 import { claims, evidence } from './schema/claims.js';
 import { countries } from './schema/countries.js';
 import {
@@ -371,7 +372,7 @@ export class EventQueries {
 
     const base = await this.hydrateDetail(event);
 
-    const [claimRows, assessmentRows, runRows, sourceRows] = await Promise.all([
+    const [claimRows, assessmentRows, runRows, chainRows] = await Promise.all([
       this.db
         .select()
         .from(claims)
@@ -388,13 +389,18 @@ export class EventQueries {
         .where(eq(analysisRuns.eventId, event.id))
         .orderBy(desc(analysisRuns.createdAt))
         .limit(20),
-      this.loadEventSourceRows(event.id),
+      this.db
+        .select()
+        .from(impactChains)
+        .where(eq(impactChains.eventId, event.id))
+        .orderBy(asc(impactChains.version)),
     ]);
 
     const claimIds = claimRows.map((row) => row.id);
     const assessmentIds = assessmentRows.map((row) => row.id);
+    const chainIds = chainRows.map((row) => row.id);
 
-    const [evidenceRows, categoryRows] = await Promise.all([
+    const [evidenceRows, categoryRows, chainNodeRows, chainEdgeRows] = await Promise.all([
       claimIds.length === 0
         ? Promise.resolve([])
         : this.db.select().from(evidence).where(inArray(evidence.claimId, claimIds)),
@@ -404,11 +410,23 @@ export class EventQueries {
             .select()
             .from(impactCategoryLevels)
             .where(inArray(impactCategoryLevels.assessmentId, assessmentIds)),
+      chainIds.length === 0
+        ? Promise.resolve([])
+        : this.db
+            .select()
+            .from(impactChainNodes)
+            .where(inArray(impactChainNodes.chainId, chainIds)),
+      chainIds.length === 0
+        ? Promise.resolve([])
+        : this.db
+            .select()
+            .from(impactChainEdges)
+            .where(inArray(impactChainEdges.chainId, chainIds)),
     ]);
 
     return {
       ...base,
-      sources: sourceRows,
+      sources: this.loadEventSourceRows(event.id),
       claims: claimRows.map((claim) => ({
         id: claim.id,
         statement: claim.statement,
@@ -459,7 +477,100 @@ export class EventQueries {
         reviewedBy: run.reviewedBy,
         createdAt: iso(run.createdAt),
       })),
+      chains: chainRows.map((chain) => ({
+        id: chain.id,
+        version: chain.version,
+        status: chain.status,
+        reasoning: chain.reasoning,
+        modelName: chain.modelName,
+        promptVersion: chain.promptVersion,
+        publishedAt: iso(chain.publishedAt),
+        createdAt: iso(chain.createdAt),
+        nodes: chainNodeRows
+          .filter((node) => node.chainId === chain.id)
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((node) => ({
+            id: node.id,
+            kind: node.kind,
+            label: node.label,
+            description: node.description,
+            category: node.category,
+            sortOrder: node.sortOrder,
+          })),
+        edges: chainEdgeRows
+          .filter((edge) => edge.chainId === chain.id)
+          .map((edge) => ({
+            id: edge.id,
+            fromNodeId: edge.fromNodeId,
+            toNodeId: edge.toNodeId,
+          })),
+      })),
     };
+  }
+
+  /**
+   * Published chain snapshots for the public event page — mirrors
+   * getEventImpact's {current, history} shape. Drafts never appear here.
+   */
+  async getEventChain(eventId: string) {
+    const [event] = await this.db
+      .select({ id: events.id, currentChainId: events.currentImpactChainId })
+      .from(events)
+      .where(eq(events.id, eventId))
+      .limit(1);
+    if (!event) {
+      throw new DomainError('EVENT_NOT_FOUND', 'Event not found');
+    }
+
+    const chainRows = await this.db
+      .select()
+      .from(impactChains)
+      .where(and(eq(impactChains.eventId, eventId), eq(impactChains.status, 'PUBLISHED')))
+      .orderBy(asc(impactChains.version));
+
+    const chainIds = chainRows.map((row) => row.id);
+    const [nodeRows, edgeRows] = await Promise.all([
+      chainIds.length === 0
+        ? Promise.resolve([])
+        : this.db
+            .select()
+            .from(impactChainNodes)
+            .where(inArray(impactChainNodes.chainId, chainIds)),
+      chainIds.length === 0
+        ? Promise.resolve([])
+        : this.db
+            .select()
+            .from(impactChainEdges)
+            .where(inArray(impactChainEdges.chainId, chainIds)),
+    ]);
+
+    const history = chainRows.map((chain) => ({
+      id: chain.id,
+      version: chain.version,
+      status: chain.status,
+      reasoning: chain.reasoning,
+      modelName: chain.modelName,
+      promptVersion: chain.promptVersion,
+      publishedAt: iso(chain.publishedAt),
+      nodes: nodeRows
+        .filter((node) => node.chainId === chain.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((node) => ({
+          id: node.id,
+          kind: node.kind,
+          label: node.label,
+          description: node.description,
+          category: node.category,
+        })),
+      edges: edgeRows
+        .filter((edge) => edge.chainId === chain.id)
+        .map((edge) => ({ id: edge.id, fromNodeId: edge.fromNodeId, toNodeId: edge.toNodeId })),
+    }));
+
+    const current =
+      history.find((item) => item.id === event.currentChainId) ?? history.at(-1) ?? null;
+
+    return { current, history };
   }
 
   async listRecentAnalysisRuns(limit = 10) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sanitizeEventAnalysis, validateEventAnalysis } from './index.js';
+import { TEST_IMPACT_CHAIN } from './test-fixtures.js';
 
 const allowed = new Set(['https://example.test/real']);
 
@@ -27,6 +28,7 @@ function baseClaim(overrides: Record<string, unknown> = {}) {
       categories: [{ category: 'ENERGY', level: 'MEDIUM', reasoning: 'Estimate.' }],
     },
     watchNext: [],
+    impactChain: TEST_IMPACT_CHAIN,
   });
 }
 

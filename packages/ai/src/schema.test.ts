@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseEventAnalysisJson, validateEventAnalysis } from './schema.js';
+import { TEST_IMPACT_CHAIN } from './test-fixtures.js';
 
 const valid = {
   eventType: 'ENERGY_SHOCK',
@@ -29,6 +30,7 @@ const valid = {
     ],
   },
   watchNext: ['Official shipping advisories'],
+  impactChain: TEST_IMPACT_CHAIN,
 };
 
 describe('event analysis schema', () => {

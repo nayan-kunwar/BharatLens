@@ -44,6 +44,7 @@ export const ErrorCode = {
   ASSESSMENT_NOT_FOUND: 'ASSESSMENT_NOT_FOUND',
   CLAIM_NOT_FOUND: 'CLAIM_NOT_FOUND',
   ANALYSIS_RUN_NOT_FOUND: 'ANALYSIS_RUN_NOT_FOUND',
+  CHAIN_NOT_FOUND: 'CHAIN_NOT_FOUND',
 } as const;
 
 export { DomainError } from './errors.js';
@@ -64,11 +65,14 @@ export {
   SOURCE_TYPES,
   INGESTION_JOB_STATUSES,
   ANALYSIS_RUN_STATUSES,
+  CHAIN_NODE_KINDS,
+  CHAIN_LIMITS,
 } from './domain.js';
 export type {
   AnalysisConfidence,
   ArticleStatus,
   AssessmentStatus,
+  ChainNodeKind,
   ClaimStatus,
   ClaimType,
   EventStatus,
@@ -87,6 +91,12 @@ export {
   nextStatusAfterTimelineUpdate,
   statusesAfterSuccessfulAnalysis,
 } from './lifecycle.js';
+export {
+  validateChainGraph,
+  type ChainEdgeInput,
+  type ChainGraphIssue,
+  type ChainNodeInput,
+} from './chain.js';
 export { compareImpactLevel, diffCategoryLevels, mergeEventChronology } from './timeline.js';
 export {
   classifyClaimType,

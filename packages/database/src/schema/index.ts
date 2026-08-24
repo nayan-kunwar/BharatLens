@@ -1,5 +1,6 @@
 export * from './analysis.js';
 export * from './articles.js';
+export * from './chains.js';
 export * from './claims.js';
 export * from './countries.js';
 export * from './enums.js';

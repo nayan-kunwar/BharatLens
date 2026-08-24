@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { analysisRuns } from './analysis.js';
 import { articles } from './articles.js';
+import { impactChainEdges, impactChainNodes, impactChains } from './chains.js';
 import { claims, evidence } from './claims.js';
 import { countries } from './countries.js';
 import {
@@ -44,14 +45,33 @@ export const eventsRelations = relations(events, ({ many, one }) => ({
     fields: [events.currentImpactAssessmentId],
     references: [impactAssessments.id],
   }),
+  currentChain: one(impactChains, {
+    fields: [events.currentImpactChainId],
+    references: [impactChains.id],
+  }),
   countries: many(eventCountries),
   topics: many(eventTopics),
   articles: many(eventArticles),
   updates: many(eventUpdates),
   watchItems: many(watchItems),
   assessments: many(impactAssessments),
+  chains: many(impactChains),
   claims: many(claims),
   analysisRuns: many(analysisRuns),
+}));
+
+export const impactChainsRelations = relations(impactChains, ({ one, many }) => ({
+  event: one(events, { fields: [impactChains.eventId], references: [events.id] }),
+  nodes: many(impactChainNodes),
+  edges: many(impactChainEdges),
+}));
+
+export const impactChainNodesRelations = relations(impactChainNodes, ({ one }) => ({
+  chain: one(impactChains, { fields: [impactChainNodes.chainId], references: [impactChains.id] }),
+}));
+
+export const impactChainEdgesRelations = relations(impactChainEdges, ({ one }) => ({
+  chain: one(impactChains, { fields: [impactChainEdges.chainId], references: [impactChains.id] }),
 }));
 
 export const eventCountriesRelations = relations(eventCountries, ({ one }) => ({

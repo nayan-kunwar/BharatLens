@@ -1,5 +1,7 @@
 import {
   ANALYSIS_CONFIDENCE_LEVELS,
+  CHAIN_LIMITS,
+  CHAIN_NODE_KINDS,
   CLAIM_TYPES,
   IMPACT_CATEGORIES,
   IMPACT_LEVELS,
@@ -7,6 +9,35 @@ import {
 import { z } from 'zod';
 
 const entityKindSchema = z.enum(['COUNTRY', 'ORG', 'PLACE', 'OTHER']);
+
+/** Short caller-side identifier used to wire edges before DB ids exist. */
+const chainNodeKeySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(24)
+  .regex(/^[a-zA-Z0-9_-]+$/, 'chain node keys must be alphanumeric');
+
+export const impactChainSchema = z.object({
+  nodes: z
+    .array(
+      z.object({
+        key: chainNodeKeySchema,
+        kind: z.enum(CHAIN_NODE_KINDS),
+        label: z.string().trim().min(3).max(200),
+        description: z.string().trim().max(500).optional(),
+        category: z.enum(IMPACT_CATEGORIES).optional(),
+      }),
+    )
+    .min(3)
+    .max(CHAIN_LIMITS.MAX_NODES),
+  edges: z
+    .array(z.object({ from: chainNodeKeySchema, to: chainNodeKeySchema }))
+    .min(2)
+    .max(CHAIN_LIMITS.MAX_EDGES),
+});
+
+export type ImpactChainAnalysis = z.infer<typeof impactChainSchema>;
 
 export const eventAnalysisSchema = z.object({
   eventType: z.string().trim().min(1).max(80),
@@ -48,6 +79,7 @@ export const eventAnalysisSchema = z.object({
       .max(IMPACT_CATEGORIES.length),
   }),
   watchNext: z.array(z.string().trim().min(1).max(200)).max(12),
+  impactChain: impactChainSchema,
 });
 
 export type EventAnalysis = z.infer<typeof eventAnalysisSchema>;

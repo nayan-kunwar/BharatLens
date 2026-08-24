@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { adminFetch, type AdminEventDetail } from '../../../../lib/admin-api';
-import { AnalyzeButton, ClaimReviewButtons, DraftAssessmentEditor } from '../../../review-actions';
+import {
+  AnalyzeButton,
+  ChainEditor,
+  ClaimReviewButtons,
+  DraftAssessmentEditor,
+} from '../../../review-actions';
 
 export const metadata = { title: 'Review event' };
 
@@ -28,6 +33,8 @@ export default async function AdminEventReviewPage({
 
   const draft = event.assessments.filter((item) => item.status === 'DRAFT').at(-1) ?? null;
   const publishedCount = event.assessments.filter((item) => item.status === 'PUBLISHED').length;
+  const draftChain = event.chains.filter((item) => item.status === 'DRAFT').at(-1) ?? null;
+  const publishedChainCount = event.chains.filter((item) => item.status === 'PUBLISHED').length;
 
   return (
     <div className="page-shell">
@@ -108,6 +115,24 @@ export default async function AdminEventReviewPage({
           </>
         ) : (
           <p>No draft assessment. Run AI analysis to generate one for review.</p>
+        )}
+      </section>
+
+      <section className="admin-section">
+        <h2>Impact chains</h2>
+        <p className="admin-muted">
+          {publishedChainCount} published version{publishedChainCount === 1 ? '' : 's'} · history is
+          immutable.
+        </p>
+        {draftChain ? (
+          <>
+            <h3>Draft chain v{draftChain.version} (editable)</h3>
+            <ChainEditor chain={draftChain} />
+          </>
+        ) : (
+          <p>
+            No draft chain. Run AI analysis to generate one, or publish requires an existing draft.
+          </p>
         )}
       </section>
 

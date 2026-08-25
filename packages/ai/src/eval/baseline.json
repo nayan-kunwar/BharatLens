@@ -1,0 +1,10 @@
+{
+  "total": 12,
+  "schemaPassCount": 10,
+  "noFactLeakCount": 9,
+  "fabricationCaughtCount": 1,
+  "chainValidCount": 9,
+  "levelExactCount": 2,
+  "levelAdjacentCount": 6,
+  "claimTypeAgreeCount": 3
+}

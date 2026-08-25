@@ -21,6 +21,7 @@
     "ingest:rss": "pnpm --filter @bharatlens/ingestion ingest",
     "claims:extract": "pnpm --filter @bharatlens/ingestion extract-claims",
     "analyze:event": "pnpm --filter @bharatlens/ai analyze",
+    "eval:ai": "pnpm --filter @bharatlens/ai eval",
     "queue": "pnpm --filter @bharatlens/jobs cli",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

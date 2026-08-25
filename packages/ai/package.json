@@ -14,7 +14,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
     "test": "vitest run",
-    "analyze": "node --env-file=../../.env --import tsx src/cli.ts"
+    "analyze": "node --env-file=../../.env --import tsx src/cli.ts",
+    "eval": "node --env-file=../../.env --import tsx src/eval/cli.ts"
   },
   "dependencies": {
     "@bharatlens/database": "workspace:*",

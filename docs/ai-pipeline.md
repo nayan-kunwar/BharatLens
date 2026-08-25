@@ -79,3 +79,23 @@ Latency, cost, and hallucination risk. Readers should see reviewed assessments. 
 | Re-run                   | New run + next DRAFT version (append-only) |
 
 M10 will add `reviewed_at` / `reviewed_by` usage and publish/reject. Those columns exist now so the audit row is complete.
+
+## Evaluation harness (M15)
+
+`pnpm eval:ai --model=stub|live [--check] [--update-baseline] [--json=path]`
+
+Two tiers (see `ADR-012-eval-harness.md`):
+
+- **Offline (runs inside the normal test suite):** an adversarial output corpus
+  is pushed through parse -> validate -> sanitize and the chain-graph gate.
+  Proves schema enforcement, FACT stripping, URL-fabrication rejection, and
+  chain validity without any network call.
+- **Live scenarios:** six gold-labeled fixtures scored on behavioral counts —
+  schema pass, raw FACT leaks, fabrication caught, chain validity, overall-level
+  exact vs adjacent-rank agreement, dominant claim-type agreement. Results are
+  compared against a committed `baseline.json`; `--check` fails on any dropped
+  metric. Levels are never merged into a score, and model-emitted confidence is
+  never treated as accuracy.
+
+Update `baseline.json` only as a deliberate commit alongside intentional
+prompt/stub changes.

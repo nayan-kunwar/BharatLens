@@ -105,4 +105,6 @@ packages/shared     API envelope + domain enums/lifecycle
 - [Ingestion](docs/ingestion.md)
 - [Evidence](docs/evidence.md)
 - [AI pipeline](docs/ai-pipeline.md)
+- [Local ops](docs/ops-local.md)
+- [Product guide](docs/BharatLens-Guide.html) ([PDF](docs/BharatLens-Guide.pdf))
 - [Decisions](docs/decisions/)

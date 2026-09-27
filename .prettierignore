@@ -6,3 +6,6 @@ coverage
 pnpm-lock.yaml
 *.tsbuildinfo
 AGENTS.md
+# Generated product guide (exported artifact, not source)
+docs/BharatLens-Guide.html
+docs/BharatLens-Guide.pdf

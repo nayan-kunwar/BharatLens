@@ -80,9 +80,8 @@ Pino JSON logs in production. Pretty printing only when `NODE_ENV=development`. 
 
 ## What not to add yet
 
-- Admin write APIs (M10)
-- Impact chain graph tables (M11)
-- AI evaluation harnesses (M15)
 - Elasticsearch, Kafka, extra services in Compose
+
+See `docs/ops-local.md` for local backup, restore, and secrets rules.
 
 Integration tests that touch Redis use a dedicated `bharatlens-test` queue prefix so they never consume jobs from a running worker. Test fixtures across packages are namespaced under `fixture-` slugs so one suite's cleanup can never delete another suite's rows.

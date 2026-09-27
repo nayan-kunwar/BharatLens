@@ -3,6 +3,7 @@ name: bharatlens
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: bharatlens
       POSTGRES_PASSWORD: bharatlens
@@ -19,6 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - '6379:6379'
     healthcheck:
@@ -31,6 +33,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
+    restart: unless-stopped
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
@@ -58,6 +61,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.worker
+    restart: unless-stopped
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
@@ -85,6 +89,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.web
+    restart: unless-stopped
     environment:
       NODE_ENV: production
       API_BASE_URL: http://api:3001

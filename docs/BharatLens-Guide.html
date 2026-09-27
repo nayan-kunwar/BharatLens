@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BharatLens - Complete Project Guide</title>
+<style>
+  @page { margin: 2cm; size: A4; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 210mm; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 28pt; color: #0d47a1; border-bottom: 3px solid #0d47a1; padding-bottom: 8px; margin-top: 40px; page-break-after: avoid; }
+  h2 { font-size: 20pt; color: #1565c0; border-bottom: 2px solid #e3f2fd; padding-bottom: 5px; margin-top: 30px; page-break-after: avoid; }
+  h3 { font-size: 15pt; color: #1976d2; margin-top: 20px; page-break-after: avoid; }
+  h4 { font-size: 12pt; color: #333; margin-top: 15px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; page-break-inside: avoid; }
+  th { background: #e3f2fd; color: #0d47a1; padding: 8px 10px; text-align: left; border: 1px solid #bbdefb; font-weight: 600; }
+  td { padding: 7px 10px; border: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) { background: #f5f5f5; }
+  code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; font-family: 'Consolas', 'Courier New', monospace; font-size: 9.5pt; color: #c62828; }
+  pre { background: #263238; color: #eeffff; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 9pt; line-height: 1.5; page-break-inside: avoid; }
+  pre code { background: none; color: inherit; padding: 0; }
+  .cover { text-align: center; padding: 80px 20px 60px; page-break-after: always; }
+  .cover h1 { font-size: 42pt; border: none; color: #0d47a1; margin-bottom: 10px; }
+  .cover .tagline { font-size: 18pt; color: #1565c0; font-style: italic; margin-bottom: 40px; }
+  .cover .subtitle { font-size: 14pt; color: #555; margin-top: 60px; }
+  .toc { page-break-after: always; }
+  .toc h2 { border-bottom: 2px solid #0d47a1; }
+  .toc ul { list-style: none; padding-left: 0; }
+  .toc li { padding: 4px 0; border-bottom: 1px dotted #ccc; }
+  .toc li a { text-decoration: none; color: #1565c0; }
+  .note { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 10px 15px; margin: 12px 0; border-radius: 0 4px 4px 0; font-size: 10pt; }
+  .warning { background: #fff3e0; border-left: 4px solid #ff9800; padding: 10px 15px; margin: 12px 0; border-radius: 0 4px 4px 0; font-size: 10pt; }
+  .diagram { background: #f5f5f5; border: 1px solid #e0e0e0; padding: 15px; border-radius: 6px; font-family: 'Consolas', monospace; font-size: 9pt; white-space: pre; line-height: 1.4; page-break-inside: avoid; overflow-x: auto; }
+  .section { page-break-before: always; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 8pt; font-weight: 600; margin-right: 5px; }
+  .badge-high { background: #ffcdd2; color: #c62828; }
+  .badge-med { background: #fff9c4; color: #f57f17; }
+  .badge-low { background: #c8e6c9; color: #2e7d32; }
+  ul, ol { margin: 8px 0; padding-left: 25px; }
+  li { margin: 3px 0; }
+  .two-col { display: flex; gap: 20px; }
+  .two-col > div { flex: 1; }
+  .footer { text-align: center; color: #999; font-size: 9pt; margin-top: 40px; padding-top: 15px; border-top: 1px solid #eee; }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <h1>BharatLens</h1>
+  <div class="tagline">"See the world through India's lens."</div>
+  <p style="font-size: 13pt; color: #333; max-width: 500px; margin: 30px auto;">
+    An India-focused geopolitical intelligence platform that transforms global events
+    into source-backed explanations of their potential impact on India.
+  </p>
+  <div class="subtitle">
+    <strong>Complete Project Guide</strong><br>
+    Architecture | Domain Model | API | AI Pipeline | Development<br><br>
+    Version: M15 (AI Evaluation)<br>
+    Generated: August 2026
+  </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ul>
+    <li><strong>1.</strong> Project Overview</li>
+    <li><strong>2.</strong> Product Vision & Core Loop</li>
+    <li><strong>3.</strong> Technology Stack</li>
+    <li><strong>4.</strong> Architecture Overview</li>
+    <li><strong>5.</strong> Repository Structure</li>
+    <li><strong>6.</strong> Database Schema & Domain Model</li>
+    <li><strong>7.</strong> API Reference</li>
+    <li><strong>8.</strong> Data Ingestion Pipeline</li>
+    <li><strong>9.</strong> Deduplication Strategy</li>
+    <li><strong>10.</strong> Claims & Evidence System</li>
+    <li><strong>11.</strong> AI Analysis Pipeline</li>
+    <li><strong>12.</strong> Background Processing (BullMQ)</li>
+    <li><strong>13.</strong> Admin Console & Human Review</li>
+    <li><strong>14.</strong> Impact Chains</li>
+    <li><strong>15.</strong> Frontend Pages</li>
+    <li><strong>16.</strong> Search System</li>
+    <li><strong>17.</strong> Analytics & Map</li>
+    <li><strong>18.</strong> Development Setup</li>
+    <li><strong>19.</strong> Key Commands Reference</li>
+    <li><strong>20.</strong> Architecture Decision Records</li>
+    <li><strong>21.</strong> Failure Modes & Observability</li>
+    <li><strong>22.</strong> AI Evaluation Harness</li>
+    <li><strong>23.</strong> Design Principles</li>
+  </ul>
+</div>
+
+<!-- SECTION 1 -->
+<div class="section">
+<h1>1. Project Overview</h1>
+
+<h3>What BharatLens Does</h3>
+<p>BharatLens answers one core question:</p>
+<div class="note"><strong>"Something happened in the world. What does it mean for India?"</strong></div>
+
+<p>It is NOT a news aggregator. It is a geopolitical intelligence platform that:</p>
+<ul>
+  <li>Ingests news from global sources (RSS feeds)</li>
+  <li>Extracts factual claims and evidence</li>
+  <li>Classifies events by India-relevant impact categories</li>
+  <li>Generates structured impact assessments with source attribution</li>
+  <li>Maintains audit trails for AI-generated analysis</li>
+  <li>Supports human review before publication</li>
+</ul>
+
+<h3>Core Product Loop</h3>
+<div class="diagram">
+WORLD EVENT
+     |
+     v
+WHAT HAPPENED?        (Fact extraction from sources)
+     |
+     v
+WHY DID IT HAPPEN?    (Context and claims)
+     |
+     v
+WHY DOES INDIA CARE?  (India relevance analysis)
+     |
+     v
+WHAT IN INDIA IS EXPOSED?  (Exposure assessment)
+     |
+     v
+WHAT COULD HAPPEN?    (Scenario analysis)
+     |
+     v
+WHAT SHOULD WE WATCH NEXT?  (Monitoring signals)
+</div>
+
+<h3>Milestone Status</h3>
+<p>The project is at <strong>M15 (AI Evaluation)</strong>. All milestones M0 through M15 are implemented:</p>
+<table>
+  <tr><th>Milestone</th><th>Name</th><th>Status</th></tr>
+  <tr><td>M0</td><td>Foundation</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M1</td><td>Core Domain</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M2</td><td>REST API</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M3</td><td>Frontend</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M4</td><td>Event Timeline</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M5</td><td>News Ingestion</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M6</td><td>Deduplication</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M7</td><td>Evidence + Claims</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M8</td><td>AI Analysis</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M9</td><td>Background Processing</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M10</td><td>Admin + Human Review</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M11</td><td>Impact Chains</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M12</td><td>Search</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M13</td><td>Geopolitical Map</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M14</td><td>Advanced Analytics</td><td><span class="badge badge-low">Done</span></td></tr>
+  <tr><td>M15</td><td>AI Evaluation</td><td><span class="badge badge-low">Done</span></td></tr>
+</table>
+</div>
+
+<!-- SECTION 2 -->
+<div class="section">
+<h1>2. Product Vision & Core Loop</h1>
+
+<h3>Event Lifecycle</h3>
+<div class="diagram">
+SOURCE (RSS feeds, government statements)
+   |
+   v
+ARTICLE (metadata: title, URL, summary, hash)
+   |
+   v
+CANDIDATE EVENT (auto-grouped unmatched coverage)
+   |
+   v
+DEDUPLICATION (URL, content hash, title, entity overlap)
+   |
+   v
+EVENT (one table, status field distinguishes candidates vs published)
+   |
+   +---> Claims --> Evidence
+   +---> Updates (timeline)
+   +---> Impact Assessments (v1, v2, v3...)
+   +---> Impact Chains (v1, v2...)
+   |
+   v
+HUMAN REVIEW (admin console)
+   |
+   v
+PUBLISHED EVENT
+</div>
+
+<h3>Fact vs Analysis vs Scenario</h3>
+<p>Every important claim is classified. This is a critical product requirement.</p>
+<table>
+  <tr><th>Type</th><th>Meaning</th><th>Example</th></tr>
+  <tr><td><code>FACT</code></td><td>Directly supported by reliable evidence</td><td>"Oil prices increased after the disruption."</td></tr>
+  <tr><td><code>ANALYSIS</code></td><td>Reasoned interpretation based on facts</td><td>"A prolonged disruption could increase India's import costs."</td></tr>
+  <tr><td><code>SCENARIO</code></td><td>A possible future outcome</td><td>"If the disruption lasts months, inflationary pressure could grow."</td></tr>
+  <tr><td><code>UNKNOWN</code></td><td>Insufficient reliable information</td><td>"The exact future duration of the disruption."</td></tr>
+</table>
+
+<h3>India Impact Categories</h3>
+<table>
+  <tr><th>Category</th><th>Description</th></tr>
+  <tr><td><code>ENERGY</code></td><td>Oil, gas, coal, renewable energy exposure</td></tr>
+  <tr><td><code>TRADE</code></td><td>Import/export relationships, tariffs, supply chains</td></tr>
+  <tr><td><code>ECONOMY</code></td><td>GDP, inflation, currency, fiscal impact</td></tr>
+  <tr><td><code>SECURITY</code></td><td>Regional stability, terrorism, border security</td></tr>
+  <tr><td><code>DEFENCE</code></td><td>Military relationships, arms procurement</td></tr>
+  <tr><td><code>DIPLOMACY</code></td><td>Bilateral/multilateral relationships</td></tr>
+  <tr><td><code>TECHNOLOGY</code></td><td>Tech supply chains, digital infrastructure</td></tr>
+  <tr><td><code>SUPPLY_CHAIN</code></td><td>Critical supply chain dependencies</td></tr>
+  <tr><td><code>INDIAN_CITIZENS</code></td><td>Diaspora, students, workers abroad</td></tr>
+</table>
+
+<h3>Impact Levels</h3>
+<table>
+  <tr><th>Level</th><th>Description</th></tr>
+  <tr><td><code>LOW</code></td><td>Minimal direct impact on India</td></tr>
+  <tr><td><code>MEDIUM</code></td><td>Notable exposure, manageable effects</td></tr>
+  <tr><td><code>HIGH</code></td><td>Significant direct impact on Indian interests</td></tr>
+  <tr><td><code>CRITICAL</code></td><td>Severe immediate threat to Indian interests</td></tr>
+</table>
+
+<h3>Evidence Strength vs Analysis Confidence</h3>
+<div class="warning"><strong>These are TWO DIFFERENT fields. They must never be collapsed into one number.</strong></div>
+<table>
+  <tr><th>Field</th><th>Question</th><th>Owner</th><th>Values</th></tr>
+  <tr><td><code>evidence_strength</code></td><td>How well is this supported by sources?</td><td>Computed from linked evidence</td><td>WEAK / MODERATE / STRONG</td></tr>
+  <tr><td><code>analysis_confidence</code></td><td>How sure is this interpretation?</td><td>Reviewer or model (labeled as estimate)</td><td>LOW / MEDIUM / HIGH</td></tr>
+</table>
+</div>
+
+<!-- SECTION 3 -->
+<div class="section">
+<h1>3. Technology Stack</h1>
+
+<table>
+  <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+  <tr><td>Runtime</td><td>Node.js 22+</td><td>JavaScript/TypeScript runtime</td></tr>
+  <tr><td>Language</td><td>TypeScript (strict mode)</td><td>Type safety across the codebase</td></tr>
+  <tr><td>Package Manager</td><td>pnpm 10</td><td>Monorepo workspace management</td></tr>
+  <tr><td>API Framework</td><td>Fastify</td><td>High-performance HTTP server</td></tr>
+  <tr><td>Frontend</td><td>Next.js 15</td><td>React SSR/SSG framework</td></tr>
+  <tr><td>Database</td><td>PostgreSQL 16</td><td>Primary data store (source of truth)</td></tr>
+  <tr><td>ORM</td><td>Drizzle ORM</td><td>Type-safe database queries & migrations</td></tr>
+  <tr><td>Queue</td><td>BullMQ</td><td>Background job processing</td></tr>
+  <tr><td>Cache/Queue Backend</td><td>Redis 7</td><td>BullMQ backend, rate limiting</td></tr>
+  <tr><td>Validation</td><td>Zod</td><td>Runtime schema validation</td></tr>
+  <tr><td>Logging</td><td>Pino</td><td>Structured JSON logging</td></tr>
+  <tr><td>Testing</td><td>Vitest</td><td>Unit and integration tests</td></tr>
+  <tr><td>Linting</td><td>ESLint + Prettier</td><td>Code quality and formatting</td></tr>
+  <tr><td>Containerization</td><td>Docker Compose</td><td>Development environment</td></tr>
+</table>
+
+<h3>Why These Choices</h3>
+<table>
+  <tr><th>Technology</th><th>Problem Solved</th><th>Alternative</th><th>Tradeoff</th></tr>
+  <tr><td>Fastify</td><td>High-performance API</td><td>Express, Hono</td><td>Faster than Express; smaller ecosystem</td></tr>
+  <tr><td>PostgreSQL</td><td>Reliable data store with FTS</td><td>MySQL, MongoDB</td><td>Best JSON + relational + FTS combo</td></tr>
+  <tr><td>Drizzle ORM</td><td>Type-safe SQL</td><td>Prisma, TypeORM</td><td>Closer to SQL; smaller bundle</td></tr>
+  <tr><td>BullMQ</td><td>Reliable job processing</td><td>Agenda, custom queues</td><td>Redis-backed; retries, backoff, observability</td></tr>
+  <tr><td>Redis</td><td>Queue backend, rate limiting</td><td>PostgreSQL LISTEN/NOTIFY</td><td>Fast; well-suited for queues</td></tr>
+  <tr><td>Next.js</td><td>SSR/SSG React frontend</td><td>Remix, Vite SPA</td><td>Server rendering for SEO; API routes</td></tr>
+  <tr><td>Zod</td><td>Runtime validation</td><td>Yup, Joi</td><td>TypeScript-first; composable schemas</td></tr>
+</table>
+</div>
+
+<!-- SECTION 4 -->
+<div class="section">
+<h1>4. Architecture Overview</h1>
+
+<h3>System Architecture</h3>
+<div class="diagram">
+                    +-----------------+
+                    |    Next.js      |
+                    |   (apps/web)    |
+                    |   Port 3000     |
+                    +--------+--------+
+                             |
+                             v
+                    +-----------------+
+                    |   Fastify API   |
+                    |  (apps/api)     |
+                    |  Port 3001      |
+                    +--------+--------+
+                             |
+              +--------------+--------------+
+              |              |              |
+              v              v              v
+        +-----------+  +-----------+  +-----------+
+        |  Events   |  |  Impact   |  |  Search   |
+        |  Routes   |  |  Routes   |  |  Routes   |
+        +-----+-----+  +-----+-----+  +-----+-----+
+              |              |              |
+              +--------------+--------------+
+                             |
+                             v
+                    +-----------------+
+                    |   PostgreSQL    |
+                    |   Port 5432     |
+                    +-----------------+
+
+    +-----------------+
+    |     Worker      |
+    |  (apps/worker)  |
+    |   Port 3002     |
+    +--------+--------+
+             |
+     +-------+-------+
+     |       |       |
+     v       v       v
+  Ingest  Claims  Analysis
+  Queue   Queue   Queue
+     |       |       |
+     +-------+-------+
+             |
+             v
+        +---------+
+        |  Redis  |
+        | Port    |
+        | 6379    |
+        +---------+
+</div>
+
+<h3>Failure Modes</h3>
+<table>
+  <tr><th>Failure</th><th>Effect</th></tr>
+  <tr><td>Postgres down</td><td><code>/ready</code> returns 503; <code>/health</code> still 200; public reads fail</td></tr>
+  <tr><td>Redis down</td><td><code>/ready</code> returns 503; background jobs pause; public reads still work</td></tr>
+  <tr><td>Worker crash</td><td>API and web still run; no new ingest/analysis</td></tr>
+  <tr><td>API crash</td><td>Web homepage shows "unreachable"; worker still processes</td></tr>
+  <tr><td>LLM unavailable</td><td>Analysis jobs fail; existing published data unaffected</td></tr>
+</table>
+
+<h3>Key Design Decisions</h3>
+<ul>
+  <li><strong>Modular Monolith first:</strong> One process per service, clear module boundaries, no premature microservices</li>
+  <li><strong>Evidence-first:</strong> Claims backed by sources, not just LLM output</li>
+  <li><strong>Human-in-the-loop:</strong> AI generates drafts; humans review and publish</li>
+  <li><strong>Append-only history:</strong> Impact assessments are versioned; corrections create new versions</li>
+  <li><strong>Separate evidence_strength from analysis_confidence:</strong> Never collapse into one number</li>
+</ul>
+</div>
+
+<!-- SECTION 5 -->
+<div class="section">
+<h1>5. Repository Structure</h1>
+
+<div class="diagram">
+bharatlens/
+  apps/
+    api/                    # Fastify HTTP API
+      src/
+        modules/
+          admin/            # Auth, review routes
+          analytics/        # Analytics routes
+          countries/        # Country routes
+          events/           # Event routes (CRUD, detail, sources, claims, impact, chain, updates)
+          map/              # Geopolitical map routes
+          topics/           # Topic routes
+        plugins/
+          error-handler.ts  # Global error handling
+          public-api.ts     # CORS, rate limiting
+          request-id.ts     # Request ID generation
+        infrastructure/
+          redis.ts          # Redis connection
+        server.ts           # Entry point
+        app.ts              # Fastify app setup
+        types.ts            # TypeScript declarations
+
+    worker/                 # BullMQ background worker
+      src/
+        processors/
+          ingest.ts         # RSS feed ingestion processor
+          claims.ts         # Claims extraction processor
+          analysis.ts       # AI analysis processor
+        infrastructure/
+          redis.ts          # Redis connection
+        scheduler.ts        # Cron-like RSS polling
+        server.ts           # Entry point
+        app.ts              # Worker setup
+
+    web/                    # Next.js frontend
+      app/                  # App Router pages
+        page.tsx            # Homepage
+        events/             # Event listing and detail
+        countries/          # Country pages
+        topics/             # Topic pages
+        map/                # Geopolitical map
+        analytics/          # Analytics dashboard
+        search/             # Full-text search
+        about/              # About page
+        admin/              # Admin console
+      components/           # React components
+      lib/                  # API client, utilities
+      styles/               # Global CSS
+
+  packages/
+    shared/                 # Domain enums, lifecycle, validation
+      src/
+        domain.ts           # EventStatus, ClaimType, ImpactLevel, etc.
+        lifecycle.ts        # Status transition rules
+        errors.ts           # Typed domain errors
+        evidence.ts         # Evidence strength computation
+        timeline.ts         # Timeline helpers
+        chain.ts            # Impact chain graph validation
+
+    config/                 # Zod-validated environment config
+    database/               # Drizzle schema, migrations, queries
+      src/
+        schema/             # 12+ schema files (events, articles, claims, etc.)
+        migrate.ts          # Migration runner
+        seed.ts             # Seed data
+        catalog.ts          # EventCatalog write API
+        queries.ts          # Read queries
+        client.ts           # Database connection
+
+    jobs/                   # Queue names, payloads, enqueue helpers
+      src/
+        queues.ts           # Queue definitions
+        payloads.ts         # Job payload schemas
+        job-ids.ts          # Deterministic job IDs
+        enqueue.ts          # Enqueue helpers
+        cli.ts              # Queue CLI
+
+    ingestion/              # RSS adapter, dedup, claims extraction
+      src/
+        adapter.ts          # NewsSourceAdapter interface
+        rss-adapter.ts      # RSS/Atom implementation
+        feeds.ts            # Feed configurations
+        normalize.ts        # URL/title normalization
+        dedupe.ts           # Multi-layer deduplication
+        pipeline.ts         # Full ingestion pipeline
+        claims.ts           # Claims extraction logic
+        candidates.ts       # Candidate event discovery
+
+    ai/                     # Structured analysis pipeline
+      src/
+        schema.ts           # Zod output schema
+        prompt.ts           # Versioned prompts
+        provider.ts         # LLM provider (OpenAI-compatible)
+        pipeline.ts         # Full analysis pipeline
+        sanitize.ts         # Output sanitization
+        cli.ts              # CLI runner
+        eval/               # Evaluation harness
+
+    logging/                # Pino logger with secret redaction
+</div>
+
+<h3>Package Dependencies</h3>
+<div class="diagram">
+@bharatlens/shared      (no deps - pure domain)
+       |
+       v
+@bharatlens/config      (depends on shared)
+       |
+       v
+@bharatlens/logging     (depends on config)
+       |
+       v
+@bharatlens/database    (depends on config, shared)
+       |
+       +---> @bharatlens/jobs       (depends on database, shared)
+       +---> @bharatlens/ingestion  (depends on database, shared)
+       +---> @bharatlens/ai         (depends on database, shared, config)
+       |
+       v
+apps/api    (depends on database, shared, config, logging, jobs)
+apps/worker (depends on database, shared, config, logging, jobs, ai, ingestion)
+apps/web    (depends on shared, config)
+</div>
+</div>
+
+<!-- SECTION 6 -->
+<div class="section">
+<h1>6. Database Schema & Domain Model</h1>
+
+<h3>Entity Relationship Overview</h3>
+<div class="diagram">
+sources ----< articles
+                    |
+                    v
+              event_articles >----< events
+                                    |
+                    +---------------+----------------+
+                    |               |                |
+                    v               v                v
+              event_countries  event_topics    claims
+                                         (evidence_strength)
+                                            |
+                                            v
+                                         evidence
+                                            |
+                                            v
+                                   impact_assessments
+                                   (analysis_confidence)
+                                   unique(event_id, version)
+                                            |
+                                            v
+                               impact_category_levels
+
+events ----< event_updates (timeline)
+events ----< watch_items
+events ----< analysis_runs (audit)
+events ----< impact_chains >---< impact_chain_nodes
+                                   impact_chain_edges
+</div>
+
+<h3>Core Tables</h3>
+<table>
+  <tr><th>Table</th><th>Purpose</th><th>Key Fields</th></tr>
+  <tr><td><code>events</code></td><td>One table for all events (candidate via status)</td><td>id, slug, title, summary, status, importance, occurred_at, current_impact_assessment_id</td></tr>
+  <tr><td><code>articles</code></td><td>Ingested article metadata (not full text)</td><td>id, source_id, url, title, content_hash, status, duplicate_of_article_id</td></tr>
+  <tr><td><code>sources</code></td><td>Publishers (Reuters, BBC, MEA, etc.)</td><td>id, name, slug, type (NEWS | GOVERNMENT | INTERNATIONAL_ORG)</td></tr>
+  <tr><td><code>claims</code></td><td>Structured statements on events</td><td>id, event_id, statement, type (FACT/ANALYSIS/SCENARIO/UNKNOWN), status, evidence_strength</td></tr>
+  <tr><td><code>evidence</code></td><td>Short excerpts + URLs supporting claims</td><td>id, claim_id, source_id, url, excerpt</td></tr>
+  <tr><td><code>impact_assessments</code></td><td>Versioned India Impact assessments</td><td>id, event_id, version, overall_level, analysis_confidence, reasoning</td></tr>
+  <tr><td><code>impact_category_levels</code></td><td>Per-category impact levels</td><td>assessment_id, category, level</td></tr>
+  <tr><td><code>event_updates</code></td><td>Timeline rows</td><td>id, event_id, title, description, update_time</td></tr>
+  <tr><td><code>impact_chains</code></td><td>Versioned causal pathways</td><td>id, event_id, version, status</td></tr>
+  <tr><td><code>impact_chain_nodes</code></td><td>Chain nodes (ROOT/CHANNEL/IMPACT)</td><td>chain_id, key, kind, label, description</td></tr>
+  <tr><td><code>impact_chain_edges</code></td><td>Chain edges (directed graph)</td><td>chain_id, from_key, to_key</td></tr>
+  <tr><td><code>analysis_runs</code></td><td>AI analysis audit trail</td><td>id, event_id, model_name, prompt_version, output, status</td></tr>
+  <tr><td><code>ingestion_jobs</code></td><td>Ingestion run audit</td><td>id, source_slug, items_seen, items_inserted, status</td></tr>
+  <tr><td><code>countries</code></td><td>World countries</td><td>code (ISO-2), name, slug</td></tr>
+  <tr><td><code>topics</code></td><td>Event topic categories</td><td>slug, name</td></tr>
+</table>
+
+<h3>Event Status Lifecycle</h3>
+<div class="diagram">
+CANDIDATE    (auto-grouped from unmatched coverage)
+    |
+    v
+DRAFT        (being prepared)
+    |
+    v
+ANALYZED     (AI analysis complete)
+    |
+    v
+REVIEW_REQUIRED  (waiting for human review)
+    |
+    v
+PUBLISHED    (visible to public)
+    |
+    v
+UPDATED      (new assessment published)
+    |
+    v
+ARCHIVED     (no longer active)
+</div>
+
+<h3>Key Constraints</h3>
+<ul>
+  <li><code>events.slug</code> unique - public URLs</li>
+  <li><code>articles.url</code> unique - ingest URL deduplication</li>
+  <li><code>articles (source_id, external_id)</code> unique - RSS GUID per source</li>
+  <li><code>claims (event_id, statement)</code> unique - idempotent extraction</li>
+  <li><code>evidence (claim_id, url)</code> unique - one URL per claim</li>
+  <li><code>impact_assessments (event_id, version)</code> unique - append-only versions</li>
+  <li>Circular FK: assessments reference events; events reference the current assessment (<code>ON DELETE SET NULL</code>)</li>
+</ul>
+
+<h3>Important Indexes</h3>
+<table>
+  <tr><th>Index</th><th>Why</th></tr>
+  <tr><td><code>events_status_idx</code></td><td>Admin vs public listings</td></tr>
+  <tr><td><code>events_occurred_at_idx</code></td><td>Chronological pages</td></tr>
+  <tr><td><code>events_published_at_idx</code></td><td>Recent events</td></tr>
+  <tr><td><code>articles_content_hash_idx</code></td><td>Dedupe lookups</td></tr>
+  <tr><td><code>articles_normalized_title_idx</code></td><td>Title-based dedup</td></tr>
+  <tr><td><code>claims_event_id_idx</code></td><td>Event detail page</td></tr>
+  <tr><td><code>evidence_claim_id_idx</code></td><td>Evidence panel</td></tr>
+  <tr><td><code>impact_assessments_event_id_idx</code></td><td>Impact history</td></tr>
+</table>
+</div>
+
+<!-- SECTION 7 -->
+<div class="section">
+<h1>7. API Reference</h1>
+
+<h3>Response Envelope</h3>
+<pre><code>// Success
+{
+  "success": true,
+  "data": { ... },
+  "meta": { "page": 1, "limit": 20, "total": 42, "pageCount": 3 }
+}
+
+// Error
+{
+  "success": false,
+  "error": {
+    "code": "EVENT_NOT_FOUND",
+    "message": "Event not found"
+  }
+}</code></pre>
+
+<h3>Public Endpoints</h3>
+<table>
+  <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+  <tr><td><code>GET</code></td><td><code>/health</code></td><td>Liveness check</td></tr>
+  <tr><td><code>GET</code></td><td><code>/ready</code></td><td>Readiness (Postgres + Redis)</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/events</code></td><td>List events (paginated, filterable)</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/events/:slug</code></td><td>Event detail</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/events/:id/sources</code></td><td>Event sources</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/events/:id/claims</code></td><td>Event claims + evidence</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/events/:id/impact</code></td><td>Current + history assessments</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/events/:id/chain</code></td><td>Impact chain graph</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/events/:id/updates</code></td><td>Event timeline</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/countries</code></td><td>List countries</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/countries/:code</code></td><td>Country detail</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/topics</code></td><td>List topics</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/topics/:slug</code></td><td>Topic detail</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/search?q=...</code></td><td>Full-text search</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/map/overview</code></td><td>Map data (country partners)</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/analytics/overview</code></td><td>Analytics data</td></tr>
+</table>
+
+<h3>Events List Query Parameters</h3>
+<table>
+  <tr><th>Param</th><th>Values</th><th>Default</th></tr>
+  <tr><td><code>page</code></td><td>1+</td><td>1</td></tr>
+  <tr><td><code>limit</code></td><td>1-100</td><td>20</td></tr>
+  <tr><td><code>country</code></td><td>ISO-2 code</td><td>-</td></tr>
+  <tr><td><code>topic</code></td><td>Topic slug</td><td>-</td></tr>
+  <tr><td><code>importance</code></td><td>LOW, MEDIUM, HIGH, CRITICAL</td><td>-</td></tr>
+  <tr><td><code>sort</code></td><td>occurredAt, publishedAt, updatedAt</td><td>occurredAt</td></tr>
+  <tr><td><code>order</code></td><td>asc, desc</td><td>desc</td></tr>
+</table>
+
+<h3>Admin Endpoints</h3>
+<table>
+  <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+  <tr><td><code>POST</code></td><td><code>/api/v1/admin/auth/login</code></td><td>Login (password, rate limited 10/min)</td></tr>
+  <tr><td><code>POST</code></td><td><code>/api/v1/admin/auth/logout</code></td><td>Clear session cookie</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/admin/overview</code></td><td>Dashboard stats</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/admin/events</code></td><td>List all events (any status)</td></tr>
+  <tr><td><code>GET</code></td><td><code>/api/v1/admin/events/:slug</code></td><td>Full detail incl. drafts</td></tr>
+  <tr><td><code>POST</code></td><td><code>/api/v1/admin/events</code></td><td>Create candidate event</td></tr>
+  <tr><td><code>PATCH</code></td><td><code>/api/v1/admin/events/:id</code></td><td>Edit event metadata</td></tr>
+  <tr><td><code>POST</code></td><td><code>/api/v1/admin/claims/:id/review</code></td><td>Approve/reject claim</td></tr>
+  <tr><td><code>PUT</code></td><td><code>/api/v1/admin/assessments/:id</code></td><td>Edit draft assessment</td></tr>
+  <tr><td><code>POST</code></td><td><code>/api/v1/admin/assessments/:id/publish</code></td><td>Publish assessment</td></tr>
+  <tr><td><code>POST</code></td><td><code>/api/v1/admin/events/:id/analyze</code></td><td>Enqueue analysis job</td></tr>
+  <tr><td><code>PUT</code></td><td><code>/api/v1/admin/chains/:id</code></td><td>Edit draft chain</td></tr>
+  <tr><td><code>POST</code></td><td><code>/api/v1/admin/chains/:id/publish</code></td><td>Publish chain</td></tr>
+  <tr><td><code>POST</code></td><td><code>/api/v1/admin/feeds/:slug/ingest</code></td><td>Enqueue feed ingestion</td></tr>
+</table>
+</div>
+
+<!-- SECTION 8 -->
+<div class="section">
+<h1>8. Data Ingestion Pipeline</h1>
+
+<h3>Pipeline Flow</h3>
+<div class="diagram">
+Feed Config (bbc-world, un-news)
+         |
+         v
+Fetch RSS/Atom (HTTP with timeout + User-Agent)
+         |
+         v
+Parse Items (title, link, guid, date, description)
+         |
+         v
+Normalize (canonical URL, collapsed title, stripped HTML)
+         |
+         v
+SHA-256 Content Hash (title + day + summary)
+         |
+         v
+Deduplication
+  |-- Hard: unique URL / (source, external_id)
+  |-- Soft: content hash, exact title, token overlap
+         |
+         v
+Insert Article (status: NORMALIZED)
+         |
+         v
+Record ingestion_jobs row
+         |
+         v
+Candidate Event Discovery (if new articles cluster)
+</div>
+
+<h3>What Is Stored</h3>
+<div class="note"><strong>BharatLens does NOT scrape full articles.</strong> It stores only metadata:</div>
+<ul>
+  <li>Source metadata (publisher name, URL)</li>
+  <li>Article title</li>
+  <li>Canonical URL</li>
+  <li>Optional short summary (max 500 characters)</li>
+  <li>Publication time</li>
+  <li>Content hash (SHA-256)</li>
+</ul>
+
+<h3>News Source Adapter</h3>
+<pre><code>interface NewsSourceAdapter {
+  fetchArticles(): Promise&lt;RawArticle[]&gt;;
+}</code></pre>
+<p>Currently ships one adapter: <code>RssAdapter</code>. A future News API adapter can implement the same interface.</p>
+
+<h3>Current Feeds</h3>
+<table>
+  <tr><th>Slug</th><th>Source</th></tr>
+  <tr><td><code>bbc-world</code></td><td>BBC World News</td></tr>
+  <tr><td><code>un-news</code></td><td>UN News</td></tr>
+</table>
+</div>
+
+<!-- SECTION 9 -->
+<div class="section">
+<h1>9. Deduplication Strategy</h1>
+
+<h3>Multi-Layer Approach</h3>
+<table>
+  <tr><th>Layer</th><th>Method</th><th>Match Type</th><th>Window</th></tr>
+  <tr><td>1</td><td>URL</td><td>Hard (no second row)</td><td>None</td></tr>
+  <tr><td>2</td><td>External ID (RSS GUID)</td><td>Hard (no second row)</td><td>None</td></tr>
+  <tr><td>3</td><td>Content hash</td><td>Soft (status=DUPLICATE)</td><td>None</td></tr>
+  <tr><td>4</td><td>Exact normalized title</td><td>Soft (status=DUPLICATE)</td><td>48 hours</td></tr>
+  <tr><td>5</td><td>Token overlap</td><td>Soft (status=DUPLICATE)</td><td>48 hours</td></tr>
+</table>
+
+<h3>Why Not Semantic Embeddings?</h3>
+<ul>
+  <li>Volume is tiny - PostgreSQL unique constraints are sufficient</li>
+  <li>Embeddings require a vector database (premature)</li>
+  <li>False positives from embeddings are harder to debug</li>
+  <li>Token overlap + gazetteer entity is precise enough for this scale</li>
+  <li>False negatives are accepted until evidence shows they matter</li>
+</ul>
+
+<h3>Candidate Event Discovery</h3>
+<p>After ingest inserts new articles, the worker scans unmatched coverage and clusters it with the precision dedupe matcher inside a 48-hour window. Clusters that pass three gates become CANDIDATE events:</p>
+<ol>
+  <li>At least 2 articles</li>
+  <li>A shared gazetteer entity (country, organization name)</li>
+  <li>A deterministic India-relevance token</li>
+</ol>
+</div>
+
+<!-- SECTION 10 -->
+<div class="section">
+<h1>10. Claims & Evidence System</h1>
+
+<h3>Claim Types</h3>
+<table>
+  <tr><th>Type</th><th>Meaning</th><th>Source</th></tr>
+  <tr><td><code>FACT</code></td><td>Directly supported by reliable evidence</td><td>Human reviewer only</td></tr>
+  <tr><td><code>ANALYSIS</code></td><td>Reasoned interpretation based on facts</td><td>Extractor or model</td></tr>
+  <tr><td><code>SCENARIO</code></td><td>A possible future outcome</td><td>Extractor or model</td></tr>
+  <tr><td><code>UNKNOWN</code></td><td>Insufficient reliable information</td><td>Extractor or model</td></tr>
+</table>
+
+<div class="warning"><strong>Key Rule:</strong> RSS headline extraction and model-generated claims are NEVER typed FACT. FACT stays a reviewer/seed decision only.</div>
+
+<h3>Evidence Strength Computation</h3>
+<p><code>evidence_strength</code> is computed from linked <code>evidence</code> rows:</p>
+<ul>
+  <li>Count distinct <code>source_id</code> values -> <code>sourceCount</code> / <code>independentSourceCount</code></li>
+  <li>Count distinct sources with type GOVERNMENT or INTERNATIONAL_ORG -> <code>officialSourceCount</code></li>
+  <li>Classification: WEAK (1 source) / MODERATE (2-3) / STRONG (4+)</li>
+</ul>
+
+<p>An LLM percentage is never stored. <code>evidenceReason</code> restates the counts in natural language.</p>
+
+<h3>Claims Extractor (Deterministic)</h3>
+<div class="diagram">
+Published event
+    |
+    v
+Find articles sharing gazetteer entity + 2 tokens with event
+    |
+    v
+Attach article to event (event_articles)
+    |
+    v
+If article overlaps existing claim -> add evidence URL + excerpt
+Else -> PENDING claim (UNKNOWN/ANALYSIS/SCENARIO) + evidence
+</div>
+
+<p>Re-runs are idempotent via unique constraints on <code>(event, statement)</code> and <code>(claim, url)</code>.</p>
+</div>
+
+<!-- SECTION 11 -->
+<div class="section">
+<h1>11. AI Analysis Pipeline</h1>
+
+<h3>Pipeline Flow</h3>
+<div class="diagram">
+Event metadata + linked claims/articles
+         |
+         v
+Versioned prompt (event-analysis-v1)
+         |
+         v
+Model call (HTTP if LLM_API_KEY set, otherwise deterministic stub)
+         |
+         v
+JSON parse -> Zod schema validation -> URL allowlist check
+         |
+         v
+Sanitization (strip extra fields, validate enums)
+         |
+         v
+analysis_runs row (audit) + DRAFT impact assessment
+         |
+         v
+Human review (M10) -> Publish
+</div>
+
+<h3>What Is Stored</h3>
+<table>
+  <tr><th>Field</th><th>Purpose</th></tr>
+  <tr><td><code>analysis_runs.model_name</code></td><td>Which model produced the JSON</td></tr>
+  <tr><td><code>analysis_runs.prompt_version</code></td><td><code>event-analysis-v1</code> today</td></tr>
+  <tr><td><code>analysis_runs.input_references</code></td><td>Event, claim IDs, article IDs, allowed URLs</td></tr>
+  <tr><td><code>analysis_runs.output</code></td><td>Validated JSON after sanitization</td></tr>
+  <tr><td><code>impact_assessments.analysis_confidence</code></td><td>LOW / MEDIUM / HIGH (estimate)</td></tr>
+  <tr><td><code>impact_assessments.evidence_strength</code></td><td>Computed from linked evidence (not the model)</td></tr>
+</table>
+
+<h3>Safety Checks</h3>
+<ol>
+  <li><strong>Schema validation (Zod):</strong> Extra fields stripped; wrong enums fail the run</li>
+  <li><strong>URL allowlist:</strong> Any <code>http(s)</code> URL not in the input allowlist fails the run</li>
+  <li><strong>Claim type:</strong> Model claims are stored <code>PENDING</code> and never as <code>FACT</code></li>
+  <li><strong>Confidence:</strong> <code>analysisConfidence</code> cannot be a percentage</li>
+  <li><strong>UNKNOWN is valid:</strong> If evidence is thin, UNKNOWN / LOW confidence is correct</li>
+</ol>
+
+<h3>Failure Modes</h3>
+<table>
+  <tr><th>Failure</th><th>Effect</th></tr>
+  <tr><td>Invalid JSON / Zod failure</td><td><code>analysis_runs</code> status = FAILED; no assessment created</td></tr>
+  <tr><td>Invented URL</td><td>FAILED; no assessment created</td></tr>
+  <tr><td>LLM HTTP error / timeout</td><td>FAILED; no assessment created</td></tr>
+  <tr><td>Re-run</td><td>New run + next DRAFT version (append-only)</td></tr>
+</table>
+
+<h3>Configuration</h3>
+<pre><code># Optional. Without it, uses deterministic stub.
+LLM_API_KEY=your-api-key
+LLM_MODEL=gpt-4o-mini
+LLM_BASE_URL=https://api.openai.com/v1</code></pre>
+</div>
+
+<!-- SECTION 12 -->
+<div class="section">
+<h1>12. Background Processing (BullMQ)</h1>
+
+<h3>Queue Architecture</h3>
+<div class="diagram">
+Scheduler (every INGEST_POLL_MINUTES)
+    |
+    v
++--------+    +--------+    +----------+
+| ingest |    | claims |    | analysis |
+| queue  |    | queue  |    |  queue   |
++---+----+    +---+----+    +----+-----+
+    |             |              |
+    v             v              v
+ ingest        claims         analysis
+ processor     processor      processor
+    |             |              |
+    v             v              v
+ PostgreSQL   PostgreSQL     PostgreSQL
+ + Redis      + Redis        + Redis
+</div>
+
+<h3>Job Properties</h3>
+<table>
+  <tr><th>Property</th><th>Value</th></tr>
+  <tr><td>Retries</td><td>5 attempts</td></tr>
+  <tr><td>Backoff</td><td>Exponential from 5 seconds</td></tr>
+  <tr><td>Lock duration</td><td>120 seconds (analysis)</td></tr>
+  <tr><td>Failed job retention</td><td>7 days in Redis</td></tr>
+  <tr><td>Payload format</td><td>Slugs (processors reload from DB)</td></tr>
+</table>
+
+<h3>Idempotency Strategy</h3>
+<ul>
+  <li><strong>Ingest:</strong> Article-level dedup (unique URL, external ID)</li>
+  <li><strong>Claims:</strong> Unique constraints (event_id, statement)</li>
+  <li><strong>Analysis:</strong> Per-day deterministic job IDs + DRAFT-assessment guard</li>
+</ul>
+
+<h3>Manual Queue Operations</h3>
+<pre><code># Enqueue feed ingestion
+pnpm queue ingest --feed=bbc-world
+
+# Enqueue claims refresh
+pnpm queue claims --event=strait-of-hormuz-shipping-disruption
+
+# Enqueue analysis (skips if draft exists today)
+pnpm queue analyze --event=strait-of-hormuz-shipping-disruption
+
+# Force analysis (always runs)
+pnpm queue analyze --event=strait-of-hormuz-shipping-disruption --force</code></pre>
+
+<h3>Worker Endpoints</h3>
+<table>
+  <tr><th>Endpoint</th><th>Purpose</th></tr>
+  <tr><td><code>GET /health</code></td><td>Liveness + queue names</td></tr>
+  <tr><td><code>GET /ready</code></td><td>Postgres + Redis checks</td></tr>
+  <tr><td><code>GET /queues</code></td><td>Per-queue depth (waiting/active/completed/failed)</td></tr>
+</table>
+</div>
+
+<!-- SECTION 13 -->
+<div class="section">
+<h1>13. Admin Console & Human Review</h1>
+
+<h3>Review Workflow</h3>
+<div class="diagram">
+CANDIDATE / REVIEW_REQUIRED event
+    |
+    v
+Review Workspace (/admin/events/[slug])
+    |
+    +---> Inspect claims + evidence
+    |       --> APPROVED / REJECTED (public sees APPROVED only)
+    |
+    +---> Run AI analysis
+    |       --> Enqueues analysis job (worker executes)
+    |
+    +---> Edit DRAFT assessment
+    |       --> Levels, reasoning, categories
+    |
+    +---> Publish
+            --> Transaction: DRAFT -> PUBLISHED
+            + lifecycle walk to public status
+            + current_impact_assessment_id swap
+</div>
+
+<h3>Admin Pages</h3>
+<table>
+  <tr><th>Page</th><th>Purpose</th></tr>
+  <tr><td><code>/admin/login</code></td><td>Password authentication</td></tr>
+  <tr><td><code>/admin</code></td><td>Dashboard: status counts, queue depth, pipeline health</td></tr>
+  <tr><td><code>/admin/events</code></td><td>Event list with status filters</td></tr>
+  <tr><td><code>/admin/events/[slug]</code></td><td>Review workspace: claims, assessments, chains, analysis runs</td></tr>
+</table>
+
+<h3>Authentication</h3>
+<ul>
+  <li>HMAC-signed httpOnly session cookie</li>
+  <li>Password from <code>ADMIN_PASSWORD</code> env var</li>
+  <li>Rate limited to 10 login attempts per minute</li>
+  <li>Session TTL configurable via <code>ADMIN_SESSION_TTL_HOURS</code></li>
+  <li>API refuses to boot without <code>ADMIN_PASSWORD</code></li>
+</ul>
+
+<h3>Key Invariants</h3>
+<ul>
+  <li>Published versions are immutable</li>
+  <li>Corrections create and publish new versions</li>
+  <li>Publishing refuses assessments without categories</li>
+  <li>Re-publishing already-published versions is rejected</li>
+  <li>Draft assessments are not visible on public API</li>
+</ul>
+</div>
+
+<!-- SECTION 14 -->
+<div class="section">
+<h1>14. Impact Chains</h1>
+
+<h3>What Is an Impact Chain?</h3>
+<p>An impact chain is a causal pathway showing how a global event leads to India-facing consequences:</p>
+<div class="diagram">
+Hormuz disruption (ROOT)
+       |
+       v
+Shipping disruption (CHANNEL)
+       |
+       v
+Oil transportation risk (CHANNEL)
+       |
+       v
+Higher energy costs (CHANNEL)
+       |
+       v
+India's import bill (IMPACT)
+       |
+       v
+Inflation pressure (IMPACT)
+       |
+       v
+Rupee / monetary policy (IMPACT)
+</div>
+
+<h3>Data Model</h3>
+<table>
+  <tr><th>Table</th><th>Purpose</th></tr>
+  <tr><td><code>impact_chains</code></td><td>Versioned chain container (v1, v2, ...)</td></tr>
+  <tr><td><code>impact_chain_nodes</code></td><td>Nodes with key, kind (ROOT/CHANNEL/IMPACT), label, description</td></tr>
+  <tr><td><code>impact_chain_edges</code></td><td>Directed edges (from_key -> to_key)</td></tr>
+</table>
+
+<h3>Graph Validity Rules</h3>
+<ul>
+  <li>Exactly one ROOT node</li>
+  <li>No cycles (acyclic graph)</li>
+  <li>All nodes reachable from root</li>
+  <li>Enforced by <code>validateChainGraph</code> in <code>@bharatlens/shared</code></li>
+</ul>
+
+<h3>Lifecycle</h3>
+<ol>
+  <li>AI proposes a DRAFT chain (prompt v2)</li>
+  <li>Reviewer edits in admin console</li>
+  <li>Reviewer publishes (freezes version)</li>
+  <li><code>events.current_impact_chain_id</code> updated</li>
+  <li>Published versions are immutable history</li>
+</ol>
+
+<h3>Rendering</h3>
+<p>The public event page renders the current chain as a top-down stepper, layered client-side from the graph using a longest-path DAG layering algorithm. No per-event hardcoding.</p>
+</div>
+
+<!-- SECTION 15 -->
+<div class="section">
+<h1>15. Frontend Pages</h1>
+
+<h3>Public Pages</h3>
+<table>
+  <tr><th>Page</th><th>Route</th><th>Description</th></tr>
+  <tr><td>Homepage</td><td><code>/</code></td><td>Hero, high-impact events, trending topics, countries to watch</td></tr>
+  <tr><td>Event Listing</td><td><code>/events</code></td><td>Filterable grid with country/topic/importance filters</td></tr>
+  <tr><td>Event Detail</td><td><code>/events/[slug]</code></td><td>Full event: what happened, why, India impact, chain, timeline, claims, sources</td></tr>
+  <tr><td>Countries</td><td><code>/countries</code></td><td>Country directory grid</td></tr>
+  <tr><td>Country Detail</td><td><code>/countries/[code]</code></td><td>Country's events with pagination</td></tr>
+  <tr><td>Topic Detail</td><td><code>/topics/[slug]</code></td><td>Topic's events with pagination</td></tr>
+  <tr><td>Map</td><td><code>/map</code></td><td>India-centered orthographic globe with choropleth</td></tr>
+  <tr><td>Analytics</td><td><code>/analytics</code></td><td>Exposure grid, trend chart, topic/country movers</td></tr>
+  <tr><td>Search</td><td><code>/search</code></td><td>Full-text search with PostgreSQL FTS</td></tr>
+  <tr><td>About</td><td><code>/about</code></td><td>Product explanation</td></tr>
+</table>
+
+<h3>Admin Pages</h3>
+<table>
+  <tr><th>Page</th><th>Route</th><th>Description</th></tr>
+  <tr><td>Login</td><td><code>/admin/login</code></td><td>Password authentication form</td></tr>
+  <tr><td>Dashboard</td><td><code>/admin</code></td><td>Status counts, queue depth, pipeline health, recent analysis runs</td></tr>
+  <tr><td>Event List</td><td><code>/admin/events</code></td><td>All events with status filters</td></tr>
+  <tr><td>Review</td><td><code>/admin/events/[slug]</code></td><td>Claims review, draft assessment editor, chain editor, analysis runs</td></tr>
+</table>
+
+<h3>Event Detail Page Structure</h3>
+<div class="diagram">
+Event Detail (/events/[slug])
+    |
+    +---> Title + Summary
+    +---> "What happened?" (description)
+    +---> "Why did it happen?" (context)
+    +---> "Why does India care?" (impact reasoning)
+    +---> India Impact Panel
+    |       +---> Overall Level (HIGH/MEDIUM/LOW)
+    |       +---> Category levels (Energy, Trade, Security...)
+    |       +---> Evidence Strength
+    |       +---> Analysis Confidence
+    +---> Impact Chain (graph visualization)
+    +---> Timeline (event updates)
+    +---> Impact History (versioned assessments)
+    +---> Claims + Evidence
+    |       +---> FACT / ANALYSIS / SCENARIO labels
+    |       +---> Source attribution
+    +---> "What to Watch Next"
+    +---> Sources
+</div>
+
+<h3>Key Components</h3>
+<table>
+  <tr><th>Component</th><th>Purpose</th></tr>
+  <tr><td><code>event-card.tsx</code></td><td>Event summary card for listings</td></tr>
+  <tr><td><code>impact-badge.tsx</code></td><td>Impact level indicator</td></tr>
+  <tr><td><code>impact-history.tsx</code></td><td>Version history visualization</td></tr>
+  <tr><td><code>event-timeline.tsx</code></td><td>Timeline visualization</td></tr>
+  <tr><td><code>impact-chain-flow.tsx</code></td><td>Graph chain visualization</td></tr>
+  <tr><td><code>review-actions.tsx</code></td><td>Admin review buttons and editors</td></tr>
+</table>
+</div>
+
+<!-- SECTION 16 -->
+<div class="section">
+<h1>16. Search System</h1>
+
+<h3>Implementation</h3>
+<p>Search uses PostgreSQL full-text search with a stored generated tsvector:</p>
+<ul>
+  <li><code>events.search_vector</code> - generated column, english configuration</li>
+  <li>Weighted: A=title, B=summary, C=description</li>
+  <li>Queries use <code>websearch_to_tsquery</code> matching</li>
+  <li>ILIKE fallback for partial words</li>
+  <li>Results ranked by <code>ts_rank</code> when <code>sort=relevance</code></li>
+</ul>
+
+<h3>Search Endpoint</h3>
+<pre><code>GET /api/v1/search?q=india+oil&sort=relevance</code></pre>
+
+<h3>Why Not Elasticsearch?</h3>
+<ul>
+  <li>Volume is tiny (hundreds of events, not millions)</li>
+  <li>PostgreSQL FTS is sufficient for this scale</li>
+  <li>Adding Elasticsearch introduces operational complexity</li>
+  <li>Can evaluate later when actual requirements justify it</li>
+</ul>
+</div>
+
+<!-- SECTION 17 -->
+<div class="section">
+<h1>17. Analytics & Map</h1>
+
+<h3>Analytics (/analytics)</h3>
+<p>All analytics are <strong>derived at read time</strong> from published/audit tables. No counters, no averages of ordinal levels.</p>
+
+<h4>Analytics Components</h4>
+<table>
+  <tr><th>Component</th><th>Description</th></tr>
+  <tr><td>Category Exposure Grid</td><td>Distribution of impact levels across categories for current published assessments</td></tr>
+  <tr><td>Publication Trend</td><td>Weekly publication count + version upgrade/downgrade transitions</td></tr>
+  <tr><td>Topic Movers</td><td>Topics with biggest change vs prior equal-length window</td></tr>
+  <tr><td>Country Movers</td><td>Countries with biggest change vs prior equal-length window</td></tr>
+</table>
+
+<p>Window defaults to 90 days, clamped to 7-365.</p>
+
+<h3>Geopolitical Map (/map)</h3>
+<ul>
+  <li>India-centered orthographic globe</li>
+  <li>Built with d3-geo + topojson-client (no wrapper library)</li>
+  <li>Choropleth intensity derived from shared-event counts</li>
+  <li>Clicking a partner shows shared published events</li>
+  <li>No curated or subjective relationship data</li>
+</ul>
+</div>
+
+<!-- SECTION 18 -->
+<div class="section">
+<h1>18. Development Setup</h1>
+
+<h3>Prerequisites</h3>
+<ul>
+  <li>Node.js 22+</li>
+  <li>pnpm 10 (via Corepack: <code>corepack enable</code>)</li>
+  <li>Docker Desktop (for PostgreSQL and Redis)</li>
+</ul>
+
+<h3>Quick Start (Docker)</h3>
+<pre><code>cp .env.example .env
+docker compose up -d postgres redis
+pnpm install
+pnpm --filter @bharatlens/shared build
+pnpm --filter @bharatlens/config build
+pnpm --filter @bharatlens/logging build
+pnpm --filter @bharatlens/database build
+pnpm db:migrate
+pnpm db:seed
+pnpm ingest:rss
+docker compose up --build</code></pre>
+
+<h3>Local Development</h3>
+<pre><code>docker compose up postgres redis
+cp .env.example .env
+pnpm install
+pnpm --filter @bharatlens/shared build
+pnpm --filter @bharatlens/config build
+pnpm --filter @bharatlens/logging build
+pnpm --filter @bharatlens/database build
+pnpm db:migrate
+pnpm db:seed
+pnpm dev:worker
+pnpm dev:api
+pnpm dev:web</code></pre>
+
+<h3>Environment Variables</h3>
+<table>
+  <tr><th>Variable</th><th>Required</th><th>Default</th><th>Description</th></tr>
+  <tr><td><code>NODE_ENV</code></td><td>No</td><td>development</td><td>Environment mode</td></tr>
+  <tr><td><code>LOG_LEVEL</code></td><td>No</td><td>info</td><td>Log verbosity</td></tr>
+  <tr><td><code>API_PORT</code></td><td>No</td><td>3001</td><td>API listen port</td></tr>
+  <tr><td><code>DATABASE_URL</code></td><td>Yes</td><td>-</td><td>PostgreSQL connection string</td></tr>
+  <tr><td><code>REDIS_URL</code></td><td>Yes</td><td>-</td><td>Redis connection string</td></tr>
+  <tr><td><code>ADMIN_PASSWORD</code></td><td>Yes (API)</td><td>-</td><td>Admin login password (min 8 chars)</td></tr>
+  <tr><td><code>INGEST_POLL_MINUTES</code></td><td>No</td><td>30</td><td>RSS polling interval (0 = off)</td></tr>
+  <tr><td><code>LLM_API_KEY</code></td><td>No</td><td>-</td><td>OpenAI-compatible API key</td></tr>
+  <tr><td><code>LLM_MODEL</code></td><td>No</td><td>gpt-4o-mini</td><td>Model name</td></tr>
+</table>
+
+<h3>Access Points</h3>
+<table>
+  <tr><th>Service</th><th>URL</th></tr>
+  <tr><td>Frontend</td><td>http://localhost:3000</td></tr>
+  <tr><td>API</td><td>http://localhost:3001</td></tr>
+  <tr><td>Worker</td><td>http://localhost:3002</td></tr>
+  <tr><td>PostgreSQL</td><td>localhost:5433</td></tr>
+  <tr><td>Redis</td><td>localhost:6379</td></tr>
+</table>
+</div>
+
+<!-- SECTION 19 -->
+<div class="section">
+<h1>19. Key Commands Reference</h1>
+
+<table>
+  <tr><th>Command</th><th>Purpose</th></tr>
+  <tr><td><code>pnpm dev:api</code></td><td>Start API server (dev mode with hot reload)</td></tr>
+  <tr><td><code>pnpm dev:worker</code></td><td>Start background worker (dev mode)</td></tr>
+  <tr><td><code>pnpm dev:web</code></td><td>Start Next.js frontend (dev mode)</td></tr>
+  <tr><td><code>pnpm db:migrate</code></td><td>Apply Drizzle SQL migrations</td></tr>
+  <tr><td><code>pnpm db:seed</code></td><td>Seed hand-authored published events</td></tr>
+  <tr><td><code>pnpm db:generate</code></td><td>Generate migration files from schema changes</td></tr>
+  <tr><td><code>pnpm ingest:rss</code></td><td>Pull RSS metadata into articles</td></tr>
+  <tr><td><code>pnpm claims:extract</code></td><td>Attach article evidence; create PENDING claims</td></tr>
+  <tr><td><code>pnpm analyze:event</code></td><td>Run AI analysis (creates DRAFT assessment)</td></tr>
+  <tr><td><code>pnpm eval:ai</code></td><td>Run AI evaluation harness</td></tr>
+  <tr><td><code>pnpm queue ingest --feed=X</code></td><td>Enqueue feed ingestion for worker</td></tr>
+  <tr><td><code>pnpm queue claims --event=X</code></td><td>Enqueue claims refresh for worker</td></tr>
+  <tr><td><code>pnpm queue analyze --event=X</code></td><td>Enqueue analysis for worker</td></tr>
+  <tr><td><code>pnpm test</code></td><td>Run unit tests (Vitest)</td></tr>
+  <tr><td><code>pnpm typecheck</code></td><td>Type-check all packages</td></tr>
+  <tr><td><code>pnpm lint</code></td><td>Run ESLint</td></tr>
+  <tr><td><code>pnpm format</code></td><td>Format with Prettier</td></tr>
+  <tr><td><code>pnpm format:check</code></td><td>Check formatting</td></tr>
+  <tr><td><code>pnpm build</code></td><td>Build all packages</td></tr>
+</table>
+</div>
+
+<!-- SECTION 20 -->
+<div class="section">
+<h1>20. Architecture Decision Records</h1>
+
+<table>
+  <tr><th>ADR</th><th>Decision</th><th>Summary</th></tr>
+  <tr><td>ADR-001</td><td>Modular Monolith</td><td>Start with one process per service, clear module boundaries, no premature microservices</td></tr>
+  <tr><td>ADR-002</td><td>PostgreSQL</td><td>Primary data store; best combo of relational, JSON, and FTS for this scale</td></tr>
+  <tr><td>ADR-003</td><td>Redis</td><td>Queue backend and rate limiting; not used as cache in M0</td></tr>
+  <tr><td>ADR-004</td><td>BullMQ</td><td>Background job processing with retries, backoff, observability; introduced in M9</td></tr>
+  <tr><td>ADR-005</td><td>Human Review</td><td>AI generates drafts; humans review and publish; never auto-publish</td></tr>
+  <tr><td>ADR-006</td><td>Evidence-First</td><td>Claims backed by sources; separate evidence_strength from analysis_confidence</td></tr>
+  <tr><td>ADR-007</td><td>Admin Auth</td><td>HMAC-signed httpOnly cookie; password from env; rate limited</td></tr>
+  <tr><td>ADR-008</td><td>Impact Chains</td><td>Versioned relational graphs; validated for acyclicity; rendered as DAG</td></tr>
+  <tr><td>ADR-009</td><td>Shared World Data</td><td>Countries, topics as first-class entities; not hardcoded in frontend</td></tr>
+  <tr><td>ADR-010</td><td>Map Rendering</td><td>d3-geo + topojson-client; no wrapper library; India-centered orthographic</td></tr>
+  <tr><td>ADR-011</td><td>Analytics Derivation</td><td>Derived at read time; no counters; no averaged ordinal levels</td></tr>
+  <tr><td>ADR-012</td><td>Claims Review</td><td>Claims require human approval; PENDING -> APPROVED/REJECTED workflow</td></tr>
+</table>
+</div>
+
+<!-- SECTION 21 -->
+<div class="section">
+<h1>21. Failure Modes & Observability</h1>
+
+<h3>Failure Modes</h3>
+<table>
+  <tr><th>Component</th><th>Failure</th><th>Effect</th><th>Mitigation</th></tr>
+  <tr><td>PostgreSQL</td><td>Down</td><td>Public reads fail; <code>/ready</code> = 503</td><td>Connection pooling; retry logic</td></tr>
+  <tr><td>Redis</td><td>Down</td><td>Background jobs pause; public reads still work</td><td>Graceful degradation; queue jobs fail safely</td></tr>
+  <tr><td>Worker</td><td>Crash</td><td>No new ingest/analysis; API+web unaffected</td><td>Process manager restarts; jobs are retryable</td></tr>
+  <tr><td>API</td><td>Crash</td><td>Web shows "unreachable"; worker unaffected</td><td>Health checks; process restart</td></tr>
+  <tr><td>LLM</td><td>Unavailable</td><td>Analysis jobs fail; existing data unaffected</td><td>Deterministic stub fallback; no auto-publish</td></tr>
+  <tr><td>Feed HTTP</td><td>Error</td><td>Specific feed job fails; other feeds continue</td><td>Per-feed job isolation; 5 retries</td></tr>
+  <tr><td>Malformed LLM output</td><td>Zod validation fails</td><td>Run status = FAILED; no assessment created</td><td>Schema validation before storage</td></tr>
+</table>
+
+<h3>Observability Metrics</h3>
+<table>
+  <tr><th>Metric</th><th>Source</th></tr>
+  <tr><td>API latency</td><td>Request logging with duration</td></tr>
+  <tr><td>API error rate</td><td>Error handler + request logging</td></tr>
+  <tr><td>Articles ingested</td><td><code>ingestion_jobs</code> table</td></tr>
+  <tr><td>Duplicates detected</td><td><code>ingestion_jobs.duplicate_reasons</code></td></tr>
+  <tr><td>AI analyses generated</td><td><code>analysis_runs</code> table</td></tr>
+  <tr><td>AI failures</td><td><code>analysis_runs</code> status = FAILED</td></tr>
+  <tr><td>Job failures</td><td>BullMQ failed jobs + worker logging</td></tr>
+  <tr><td>Queue depth</td><td><code>GET /queues</code> endpoint</td></tr>
+</table>
+
+<h3>Structured Logging</h3>
+<p>Every request includes: <code>requestId</code>, <code>method</code>, <code>path</code>, <code>statusCode</code>, <code>duration</code>.</p>
+<p>Background jobs include: <code>jobId</code>, <code>jobType</code>, <code>attempt</code>, <code>duration</code>, <code>status</code>.</p>
+<p>AI jobs include: <code>analysisId</code>, <code>model</code>, <code>promptVersion</code>, <code>eventId</code>, <code>duration</code>, <code>status</code>.</p>
+</div>
+
+<!-- SECTION 22 -->
+<div class="section">
+<h1>22. AI Evaluation Harness</h1>
+
+<h3>Overview</h3>
+<p>The evaluation harness (M15) validates AI behavior against fixtures. It does NOT use model-emitted percentages as accuracy scores.</p>
+
+<h3>Two Tiers</h3>
+
+<h4>1. Offline (runs in normal test suite)</h4>
+<ul>
+  <li>Adversarial output corpus pushed through parse -> validate -> sanitize</li>
+  <li>Proves schema enforcement, FACT stripping, URL-fabrication rejection</li>
+  <li>No network calls required</li>
+</ul>
+
+<h4>2. Live Scenarios</h4>
+<ul>
+  <li>6 gold-labeled fixtures</li>
+  <li>Scored on behavioral counts:
+    <ul>
+      <li>Schema pass rate</li>
+      <li>Raw FACT leaks</li>
+      <li>Fabrication caught</li>
+      <li>Chain validity</li>
+      <li>Overall-level exact vs adjacent-rank agreement</li>
+      <li>Dominant claim-type agreement</li>
+    </ul>
+  </li>
+  <li>Results compared against committed <code>baseline.json</code></li>
+  <li><code>--check</code> flag fails on any dropped metric</li>
+</ul>
+
+<h3>Commands</h3>
+<pre><code># Run evaluation with deterministic stub
+pnpm eval:ai --model=stub
+
+# Run with live LLM
+pnpm eval:ai --model=live
+
+# Check against baseline (CI mode)
+pnpm eval:ai --check
+
+# Update baseline after intentional changes
+pnpm eval:ai --update-baseline</code></pre>
+
+<h3>Key Principles</h3>
+<ul>
+  <li>Levels are never merged into a score</li>
+  <li>Model-emitted confidence is never treated as accuracy</li>
+  <li>Baseline updates are deliberate commits alongside prompt/stub changes</li>
+  <li>Fixtures are gold-labeled by human review</li>
+</ul>
+</div>
+
+<!-- SECTION 23 -->
+<div class="section">
+<h1>23. Design Principles</h1>
+
+<h3>Simplicity First</h3>
+<ul>
+  <li>Prefer the simplest architecture that solves the current problem</li>
+  <li>No premature microservices, Kafka, Elasticsearch, or Kubernetes</li>
+  <li>PostgreSQL is sufficient for search at current scale</li>
+  <li>Redis is used only when it solves a real problem</li>
+</ul>
+
+<h3>Evidence-First Architecture</h3>
+<ul>
+  <li>Never trust raw LLM output</li>
+  <li>Claims backed by sources, not just model output</li>
+  <li>Separate evidence_strength from analysis_confidence</li>
+  <li>FACT claims require human review</li>
+  <li>UNKNOWN is a valid result (preferred over hallucination)</li>
+</ul>
+
+<h3>Political Neutrality</h3>
+<ul>
+  <li>No promotion of political parties or ideologies</li>
+  <li>No portrayal of countries as inherently good or bad</li>
+  <li>No inflammatory language or nationalist propaganda</li>
+  <li>Source transparency over manufactured confidence</li>
+</ul>
+
+<h3>Source Transparency</h3>
+<ul>
+  <li>Every important claim has supporting sources</li>
+  <li>Never fabricate URLs, quotes, statistics, or sources</li>
+  <li>Store metadata, not full copyrighted articles</li>
+  <li>Respect robots.txt and API terms</li>
+</ul>
+
+<h3>AI Safety</h3>
+<ul>
+  <li>Never fabricate events, sources, quotes, or statistics</li>
+  <li>Never present speculation as fact</li>
+  <li>Never claim certainty without evidence</li>
+  <li>Prefer "insufficient evidence" over hallucinating</li>
+  <li>Every AI output is auditable (model, prompt version, sources, review status)</li>
+</ul>
+
+<h3>Append-Only History</h3>
+<ul>
+  <li>Impact assessments are versioned (v1, v2, v3...)</li>
+  <li>Corrections create new versions, never overwrite</li>
+  <li>Event updates form a timeline</li>
+  <li>Analysis runs are an audit trail</li>
+  <li>Published versions are immutable</li>
+</ul>
+
+<h3>Human-in-the-Loop</h3>
+<ul>
+  <li>AI generates drafts; never auto-publishes</li>
+  <li>Humans review claims, assessments, and chains</li>
+  <li>Admin console provides full inspection tools</li>
+  <li>Public API only shows approved/published data</li>
+</ul>
+
+<h3>Fail Fast</h3>
+<ul>
+  <li>Missing required env vars crash on boot</li>
+  <li>Invalid config is caught at startup</li>
+  <li>Zod validates all AI output</li>
+  <li>Unique constraints prevent duplicate data</li>
+</ul>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p><strong>BharatLens</strong> - See the world through India's lens.</p>
+  <p>Complete Project Guide | Version M15 | August 2026</p>
+  <p>Repository: C:\N-Nayan\Projects\BharatLens</p>
+</div>
+
+</body>
+</html>

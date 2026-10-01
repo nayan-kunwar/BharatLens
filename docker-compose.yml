@@ -43,6 +43,9 @@ services:
       WEB_ORIGIN: http://localhost:3000
       DATABASE_URL: postgres://bharatlens:bharatlens@postgres:5432/bharatlens
       REDIS_URL: redis://redis:6379
+      # Interpolated from the project .env file (never committed).
+      # The API fail-fasts without it by design.
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     ports:
       - '3101:3001'
     depends_on:

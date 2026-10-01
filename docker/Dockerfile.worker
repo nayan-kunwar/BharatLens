@@ -9,9 +9,11 @@ COPY apps/worker/package.json apps/worker/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/config/package.json packages/config/package.json
 COPY packages/database/package.json packages/database/package.json
+COPY packages/jobs/package.json packages/jobs/package.json
 COPY packages/logging/package.json packages/logging/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY packages/ingestion/package.json packages/ingestion/package.json
+COPY packages/ai/package.json packages/ai/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
@@ -20,6 +22,9 @@ RUN pnpm --filter @bharatlens/shared build \
  && pnpm --filter @bharatlens/config build \
  && pnpm --filter @bharatlens/logging build \
  && pnpm --filter @bharatlens/database build \
+ && pnpm --filter @bharatlens/jobs build \
+ && pnpm --filter @bharatlens/ingestion build \
+ && pnpm --filter @bharatlens/ai build \
  && pnpm --filter @bharatlens/worker build
 
 FROM base AS runner
@@ -32,6 +37,9 @@ COPY --from=build /app/packages/config/dist ./packages/config/dist
 COPY --from=build /app/packages/shared/dist ./packages/shared/dist
 COPY --from=build /app/packages/logging/dist ./packages/logging/dist
 COPY --from=build /app/packages/database/dist ./packages/database/dist
+COPY --from=build /app/packages/jobs/dist ./packages/jobs/dist
+COPY --from=build /app/packages/ingestion/dist ./packages/ingestion/dist
+COPY --from=build /app/packages/ai/dist ./packages/ai/dist
 COPY --from=build /app/apps/worker/dist ./apps/worker/dist
 COPY apps/worker/package.json apps/worker/package.json
 COPY package.json pnpm-workspace.yaml ./

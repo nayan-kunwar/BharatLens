@@ -36,3 +36,18 @@ Two constraints shaped the design:
 
 - New public endpoint `GET /api/v1/map/overview`; new `/map` page with nav link.
 - Adding curated context later means a labeled overlay table + admin CRUD — an additive change that does not disturb the derived core.
+
+## Addendum: full-boundary India overlay
+
+Natural Earth draws the de facto Line of Control, so the atlas India polygon
+renders a clipped north. Because this product shows the world through India's
+lens, `/map` overrides exactly one country: atlas feature `356` is skipped
+and a simplified DataMeet composite (`Country/india-composite.geojson`,
+retrieved October 2026, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
+is projected and drawn last so it covers the atlas Pakistan/China slivers.
+Attribution ("India boundary © DataMeet community, CC BY 4.0") lives in this
+file and the code comment in `world-map.tsx`. All other countries still come
+from the atlas; clicks on Kashmir resolve to `IN` like the rest of India.
+`india-boundary.test.ts` pins the choice (Kashmir probes inside, neighbours
+outside, islands present). Replacing the whole atlas was rejected: 200-country
+churn for a one-country problem.

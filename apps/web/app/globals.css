@@ -1465,6 +1465,12 @@ h3 {
   gap: 0.35rem;
 }
 
+.world-map__attribution {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
 .world-map__swatch {
   width: 0.85rem;
   height: 0.85rem;

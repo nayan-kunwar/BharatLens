@@ -18,12 +18,23 @@ type Topology = {
 
 type CountryProperties = { name?: string };
 
+/** Natural Earth draws the Line of Control, so this atlas feature is replaced. */
+const INDIA_ATLAS_ID = '356';
+
+type IndiaBoundary = {
+  type: 'MultiPolygon';
+  coordinates: number[][][][];
+};
+
 const WIDTH = 640;
 const HEIGHT = 640;
 
 /**
  * India-centered world map. Geography comes from the world-atlas TopoJSON
- * (Natural Earth data); projection is orthographic rotated onto India.
+ * (Natural Earth data) for every country EXCEPT India: Natural Earth draws
+ * the de facto Line of Control, so India's full official boundary comes
+ * from a simplified DataMeet composite (Country/india-composite.geojson,
+ * CC BY 4.0 — see ADR-010). Projection is orthographic rotated onto India.
  * Rendering is plain SVG via d3-geo — no wrapper library (ADR-010).
  */
 export function WorldMap({
@@ -54,9 +65,10 @@ export function WorldMap({
     let cancelled = false;
 
     async function load() {
-      const [{ geoPath }, topo] = await Promise.all([
+      const [{ geoPath }, topo, indiaBoundary] = await Promise.all([
         import('d3-geo'),
         import('world-atlas/countries-110m.json') as Promise<Topology>,
+        import('./india-boundary.json') as Promise<IndiaBoundary>,
       ]);
       const countries = feature(topo as never, topo.objects.countries as never) as unknown as {
         features: Array<GeoPermissibleObjects & { id: string; properties: CountryProperties }>;
@@ -75,12 +87,26 @@ export function WorldMap({
       const path = geoPath(projection);
 
       const rendered = countries.features
+        .filter((country) => String(country.id) !== INDIA_ATLAS_ID)
         .map((country) => ({
           id: String(country.id),
           name: country.properties?.name ?? '',
           d: path(country),
         }))
         .filter((entry): entry is { id: string; d: string; name: string } => Boolean(entry.d));
+
+      // Full-boundary India, drawn LAST so it paints over the atlas
+      // Pakistan/China slivers in the Kashmir region. Same id ('356') so
+      // fill, tooltip, and click handling resolve to India unchanged.
+      const indiaFeature = {
+        type: 'Feature',
+        properties: { name: 'India' },
+        geometry: indiaBoundary,
+      } as unknown as GeoPermissibleObjects;
+      const indiaPath = path(indiaFeature);
+      if (indiaPath) {
+        rendered.push({ id: INDIA_ATLAS_ID, name: 'India', d: indiaPath });
+      }
 
       const markers = partners
         .map((partner) => {
@@ -189,6 +215,9 @@ export function WorldMap({
           );
         })}
       </div>
+      <p className="world-map__attribution">
+        India boundary © DataMeet community (CC BY 4.0); other boundaries © Natural Earth.
+      </p>
     </div>
   );
 }

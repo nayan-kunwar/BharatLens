@@ -4,7 +4,7 @@
   "noFactLeakCount": 9,
   "fabricationCaughtCount": 1,
   "chainValidCount": 9,
-  "levelExactCount": 2,
+  "levelExactCount": 4,
   "levelAdjacentCount": 6,
   "claimTypeAgreeCount": 3
 }

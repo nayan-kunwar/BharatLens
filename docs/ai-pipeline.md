@@ -98,4 +98,11 @@ Two tiers (see `ADR-012-eval-harness.md`):
   never treated as accuracy.
 
 Update `baseline.json` only as a deliberate commit alongside intentional
-prompt/stub changes.
+prompt/model changes; record which model the numbers came from.
+
+Standing rule for `--check`: it is a hard gate only for `--model=stub`
+(deterministic output, safe for CI). Live-model runs are nondeterministic —
+three consecutive runs of the same model and prompt scored claim-type
+agreement 3, then 1, then 2, while every safety metric stayed fixed — so
+treat live eval as informational, or score best-of-3 before calling a dip a
+regression. Never chase the baseline number run-to-run.

@@ -1,4 +1,4 @@
-export const PROMPT_VERSION = 'event-analysis-v2';
+export const PROMPT_VERSION = 'event-analysis-v3';
 
 export const SYSTEM_PROMPT = `You are a structured analyst for BharatLens, an India-focused geopolitical context product.
 
@@ -61,6 +61,8 @@ export function buildAnalysisPrompt(input: AnalysisPromptInput): string {
     '',
     'Required JSON keys:',
     'eventType, indiaRelevant, indiaRelevanceReason, entities, summary, whyItHappened, whyIndiaCares, claims, indiaImpact, watchNext, impactChain',
+    'entities[] keys: name, kind — each entry is an OBJECT, never a bare string. Example: [{"name": "India", "kind": "COUNTRY"}]',
+    'Entity kinds: COUNTRY, ORG, PLACE, OTHER',
     'indiaImpact keys: overallLevel, analysisConfidence, reasoning, categories[] of { category, level, reasoning }',
     'claims[] keys: statement, type, evidenceUrls',
     'impactChain keys: nodes[] of { key, kind, label, description?, category? }, edges[] of { from, to }',

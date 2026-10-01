@@ -74,6 +74,11 @@ services:
       WEB_ORIGIN: http://localhost:3000
       DATABASE_URL: postgres://bharatlens:bharatlens@postgres:5432/bharatlens
       REDIS_URL: redis://redis:6379
+      # Interpolated from the project .env file (never committed).
+      # Unset = deterministic stub analysis. Set = live LLM analysis jobs.
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
     ports:
       - '3002:3002'
     depends_on:
